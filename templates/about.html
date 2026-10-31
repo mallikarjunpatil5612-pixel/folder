@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - Home Rental Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="text-align:center; max-width:800px; margin:0 auto 3.5rem;">
+    <span style="background:var(--primary-light); color:var(--primary); padding:0.35rem 0.85rem; border-radius:var(--radius-full); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">About Home Rental</span>
+    <h1 style="font-size:2.5rem; font-weight:800; color:var(--text-main); margin:1rem 0;">A Platform Where Homeowners & Renters Connect</h1>
+    <p style="color:var(--text-muted); font-size:1.1rem; line-height:1.7;">
+      Home Rental is a full-stack real estate and rental management platform designed to eliminate middleman hassles, verify properties, and make house and room renting transparent, affordable, and fast.
+    </p>
+  </div>
+
+  <!-- Role Pillars Grid (Directly matching the user's diagram) -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:2rem; margin-bottom:4rem;">
+    <!-- Owner -->
+    <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:2rem; box-shadow:var(--shadow-sm); text-align:center;">
+      <div style="width:60px; height:60px; border-radius:50%; background:var(--primary-light); color:var(--primary); font-size:1.75rem; display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem;">
+        <i class="fa-solid fa-house-user"></i>
+      </div>
+      <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.65rem;">1. Homeowners</h3>
+      <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6;">
+        List verified apartments, villas, and independent floors with high-resolution photos and pricing. Receive direct tenant enquiries.
+      </p>
+    </div>
+
+    <!-- Rental -->
+    <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:2rem; box-shadow:var(--shadow-sm); text-align:center;">
+      <div style="width:60px; height:60px; border-radius:50%; background:var(--brand-orange-light); color:var(--brand-orange); font-size:1.75rem; display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem;">
+        <i class="fa-solid fa-door-open"></i>
+      </div>
+      <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.65rem;">2. Rental Managers</h3>
+      <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6;">
+        Manage single room spaces, co-living setups, and room availability with custom pricing and dimensions.
+      </p>
+    </div>
+
+    <!-- Tenant -->
+    <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:2rem; box-shadow:var(--shadow-sm); text-align:center;">
+      <div style="width:60px; height:60px; border-radius:50%; background:var(--success-light); color:var(--success); font-size:1.75rem; display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem;">
+        <i class="fa-solid fa-user-check"></i>
+      </div>
+      <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.65rem;">3. Tenants & Customers</h3>
+      <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6;">
+        Search homes by budget, locality, and BHK count. View interactive maps, save favourites, and send direct rental enquiries.
+      </p>
+    </div>
+
+    <!-- Admin -->
+    <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:2rem; box-shadow:var(--shadow-sm); text-align:center;">
+      <div style="width:60px; height:60px; border-radius:50%; background:#f1f5f9; color:var(--secondary); font-size:1.75rem; display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem;">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.65rem;">4. Administrators</h3>
+      <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6;">
+        Audit listings, verify quality, approve or reject homes with feedback, and keep the ecosystem safe and trustworthy.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

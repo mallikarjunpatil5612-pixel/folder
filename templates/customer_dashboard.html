@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Tenant Dashboard - Home Rental{% endblock %}
+
+{% block content %}
+<div class="tenant-page-container">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+      <div>
+        <h1 style="font-size:1.85rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+          Welcome, <span style="background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">{{ current_user.name }}</span> 👋
+        </h1>
+        <p style="color:var(--text-muted); font-size:0.95rem;">Track your saved favorite properties and rental enquiry responses from platform.</p>
+      </div>
+      <a href="{{ url_for('properties_listing') }}" class="btn btn-primary" style="box-shadow: 0 4px 14px rgba(37,99,235,0.25);">
+        <i class="fa-solid fa-compass"></i> Find More Homes
+      </a>
+    </div>
+
+    <!-- Quick Search Bar -->
+    <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.15rem 1.25rem; margin-bottom: 1.75rem; box-shadow: var(--shadow-sm);">
+      <form action="{{ url_for('properties_listing') }}" method="GET" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+        <div style="flex: 2; min-width: 200px; position: relative;">
+          <input type="text" name="city" class="form-control" placeholder="Search city (e.g. Tumakuru, Bengaluru)..." style="padding-left: 2.4rem;">
+          <i class="fa-solid fa-location-dot" style="position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--brand-orange);"></i>
+        </div>
+        <div style="flex: 1; min-width: 150px;">
+          <select name="property_type" class="form-control">
+            <option value="">All Property Types</option>
+            {% for ptype in property_types %}
+              <option value="{{ ptype }}">{{ ptype }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-orange" style="padding: 0.65rem 1.5rem; font-weight:600;">
+          <i class="fa-solid fa-magnifying-glass"></i> Search Homes
+        </button>
+      </form>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon stat-blue"><i class="fa-solid fa-heart"></i></div>
+        <div>
+          <div class="stat-number">{{ favourites|length }}</div>
+          <div class="stat-label">Saved Favourites</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-orange" style="background:#fff7ed; color:#ea580c;"><i class="fa-solid fa-comments"></i></div>
+        <div>
+          <div class="stat-number">{{ enquiries|length }}</div>
+          <div class="stat-label">My Enquiries</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-green"><i class="fa-solid fa-house"></i></div>
+        <div>
+          <div class="stat-number">{{ featured_homes|length }}</div>
+          <div class="stat-label">Available Homes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explore Available Homes -->
+    {% if featured_homes and featured_homes|length > 0 %}
+    <div class="dashboard-panel" id="explore-homes" style="margin-top: 2rem;">
+      <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 class="panel-title"><i class="fa-solid fa-house-chimney" style="color:var(--brand-orange)"></i> Explore Available Homes</h2>
+        <a href="{{ url_for('properties_listing') }}" class="btn btn-outline-primary btn-sm">View All <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="panel-body">
+        <div class="properties-grid">
+          {% for prop in featured_homes %}
+            <div class="property-card">
+              <div class="card-img-wrapper">
+                {% if prop.property_images and prop.property_images|length > 0 %}
+                  <img src="{{ prop.property_images[0].image_url }}" alt="{{ prop.title }}" loading="lazy">
+                {% else %}
+                  <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80" alt="{{ prop.title }}" loading="lazy">
+                {% endif %}
+                <span class="property-badge-type">{{ prop.property_type }}</span>
+                <button class="fav-btn" data-property-id="{{ prop.id }}" title="Save to Favourites">
+                  <i class="fa-regular fa-heart"></i>
+                </button>
+              </div>
+              <div class="card-body">
+                <h3 class="card-title">{{ prop.title }}</h3>
+                <div class="card-location">
+                  <i class="fa-solid fa-location-dot" style="color:var(--brand-orange)"></i>
+                  <span>{{ prop.locality or prop.city }}, {{ prop.city }}</span>
+                </div>
+                <div class="card-meta">
+                  <div class="meta-item"><i class="fa-solid fa-bed"></i> <span>{{ prop.bedrooms }} BHK</span></div>
+                  <div class="meta-item"><i class="fa-solid fa-bath"></i> <span>{{ prop.bathrooms }} Bath</span></div>
+                  <div class="meta-item"><i class="fa-solid fa-ruler-combined"></i> <span>{{ prop.area_sqft }} sqft</span></div>
+                </div>
+                <div class="card-footer">
+                  <div class="card-price">₹{{ "{:,.0f}".format(prop.monthly_rent) }} <span>/ mo</span></div>
+                  <a href="{{ url_for('property_details', property_id=prop.id) }}" class="btn btn-primary btn-sm">View Details</a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Saved Favourite Homes -->
+    <div class="dashboard-panel" id="saved-favourites" style="margin-top: 2rem;">
+      <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 class="panel-title"><i class="fa-solid fa-heart" style="color:#ef4444;"></i> Saved Favourite Homes ({{ favourites|length }})</h2>
+        {% if favourites and favourites|length > 0 %}
+          <a href="{{ url_for('properties_listing') }}" class="btn btn-outline-primary btn-sm">Browse More</a>
+        {% endif %}
+      </div>
+      <div class="panel-body">
+        {% if favourites and favourites|length > 0 %}
+          <div class="properties-grid">
+            {% for prop in favourites %}
+              <div class="property-card">
+                <div class="card-img-wrapper">
+                  {% if prop.property_images and prop.property_images|length > 0 %}
+                    <img src="{{ prop.property_images[0].image_url }}" alt="{{ prop.title }}" loading="lazy">
+                  {% else %}
+                    <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80" alt="{{ prop.title }}" loading="lazy">
+                  {% endif %}
+                  <span class="property-badge-type">{{ prop.property_type }}</span>
+                  <button class="fav-btn active" data-property-id="{{ prop.id }}" title="Remove from Favourites">
+                    <i class="fa-solid fa-heart"></i>
+                  </button>
+                </div>
+                <div class="card-body">
+                  <h3 class="card-title">{{ prop.title }}</h3>
+                  <div class="card-location">
+                    <i class="fa-solid fa-location-dot" style="color:var(--brand-orange)"></i>
+                    <span>{{ prop.locality or prop.city }}, {{ prop.city }}</span>
+                  </div>
+                  <div class="card-meta">
+                    <div class="meta-item"><i class="fa-solid fa-bed"></i> <span>{{ prop.bedrooms }} BHK</span></div>
+                    <div class="meta-item"><i class="fa-solid fa-bath"></i> <span>{{ prop.bathrooms }} Bath</span></div>
+                    <div class="meta-item"><i class="fa-solid fa-ruler-combined"></i> <span>{{ prop.area_sqft }} sqft</span></div>
+                  </div>
+                  <div class="card-footer">
+                    <div class="card-price">₹{{ "{:,.0f}".format(prop.monthly_rent) }} <span>/ mo</span></div>
+                    <a href="{{ url_for('property_details', property_id=prop.id) }}" class="btn btn-primary btn-sm">View Details</a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="padding:2.5rem; text-align:center; color:var(--text-muted);">
+            <i class="fa-regular fa-heart" style="font-size:2.5rem; color:#cbd5e1; margin-bottom:0.75rem;"></i>
+            <p>You haven't saved any homes to your favourites yet.</p>
+            <a href="{{ url_for('properties_listing') }}" class="btn btn-outline-primary btn-sm" style="margin-top:0.5rem;">Browse Homes</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- My Rental Enquiries & Booking Requests -->
+    <div class="dashboard-panel" id="my-enquiries" style="margin-top: 2rem;">
+      <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 class="panel-title"><i class="fa-solid fa-comments" style="color:var(--brand-orange)"></i> My Rental Enquiries ({{ enquiries|length }})</h2>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        {% if enquiries and enquiries|length > 0 %}
+          <div style="overflow-x:auto;">
+            <table class="custom-table" style="margin:0;">
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Message Sent</th>
+                  <th>Submitted On</th>
+                  <th>Status</th>
+                  <th>Owner Contact</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for enq in enquiries %}
+                  <tr>
+                    <td>
+                      {% if enq.properties %}
+                        <strong><a href="{{ url_for('property_details', property_id=enq.properties.id) }}">{{ enq.properties.title }}</a></strong>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">
+                          {{ enq.properties.city }} • ₹{{ "{:,.0f}".format(enq.properties.monthly_rent) }}/mo
+                        </div>
+                      {% else %}
+                        <strong>Home Enquiry</strong>
+                      {% endif %}
+                      {% if enq.rooms %}
+                        <div style="font-size:0.78rem; color:var(--primary); margin-top:0.15rem;">
+                          <i class="fa-solid fa-door-open"></i> Room: {{ enq.rooms.room_type }}
+                        </div>
+                      {% endif %}
+                    </td>
+                    <td style="max-width:320px;">
+                      <div style="font-size:0.88rem; color:var(--text-main); font-style:italic;">"{{ enq.message }}"</div>
+                    </td>
+                    <td style="white-space:nowrap; font-size:0.85rem; color:var(--text-muted);">
+                      {{ enq.created_at[:10] if enq.created_at else 'Recent' }}
+                    </td>
+                    <td>
+                      {% if enq.status == 'approved' or enq.status == 'accepted' or enq.status == 'contacted' %}
+                        <span class="status-pill pill-available">
+                          <i class="fa-solid fa-circle-check"></i> {{ enq.status.capitalize() }}
+                        </span>
+                      {% elif enq.status == 'pending' %}
+                        <span class="status-pill pill-pending">
+                          <i class="fa-solid fa-clock"></i> Pending Review
+                        </span>
+                      {% else %}
+                        <span class="status-pill pill-booked">
+                          {{ enq.status.capitalize() }}
+                        </span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if enq.properties and enq.properties.contact_phone %}
+                        <a href="tel:{{ enq.properties.contact_phone }}" class="btn btn-outline btn-sm" style="font-size:0.8rem; padding:0.25rem 0.6rem;">
+                          <i class="fa-solid fa-phone"></i> {{ enq.properties.contact_phone }}
+                        </a>
+                      {% else %}
+                        <span style="color:var(--text-muted); font-size:0.85rem;">Via Platform</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if enq.properties %}
+                        <a href="{{ url_for('property_details', property_id=enq.properties.id) }}" class="btn btn-outline-primary btn-sm" style="font-size:0.8rem;">
+                          View Home
+                        </a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="padding:2.5rem; text-align:center; color:var(--text-muted);">
+            <i class="fa-regular fa-comment-dots" style="font-size:2.5rem; color:#cbd5e1; margin-bottom:0.75rem;"></i>
+            <p>You haven't submitted any rental enquiries yet.</p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Interested in a property? Send an enquiry directly from its details page.</p>
+            <a href="{{ url_for('properties_listing') }}" class="btn btn-outline-primary btn-sm">Explore Properties</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('.sidebar-nav li a');
+    
+    function highlightActiveHash() {
+      const hash = window.location.hash;
+      if (hash) {
+        navLinks.forEach(link => {
+          const href = link.getAttribute('href') || '';
+          if (href.endsWith(hash)) {
+            document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+            link.parentElement.classList.add('active');
+            const target = document.querySelector(hash);
+            if (target) {
+              setTimeout(() => target.scrollIntoView({ behavior: 'smooth' }), 100);
+            }
+          }
+        });
+      }
+    }
+
+    highlightActiveHash();
+    window.addEventListener('hashchange', highlightActiveHash);
+
+    navLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        const href = this.getAttribute('href') || '';
+        if (href.includes('#')) {
+          const hash = href.substring(href.indexOf('#'));
+          const target = document.querySelector(hash);
+          if (target && window.location.pathname.includes('dashboard')) {
+            e.preventDefault();
+            document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+            this.parentElement.classList.add('active');
+            history.pushState(null, null, hash);
+            target.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

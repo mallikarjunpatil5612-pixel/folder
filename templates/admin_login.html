@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Log In - Home Rental{% endblock %}
+
+{% block extra_head %}
+<style>
+  .admin-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 1rem;
+  }
+
+  /* Animated background grid pattern */
+  .admin-login-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 25% 25%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .admin-login-page::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 49px,
+      rgba(255, 255, 255, 0.015) 50px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 49px,
+      rgba(255, 255, 255, 0.015) 50px
+    );
+    pointer-events: none;
+  }
+
+  .admin-login-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow:
+      0 25px 60px -12px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    animation: cardSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes cardSlideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Top gradient accent bar */
+  .admin-card-accent {
+    height: 5px;
+    background: linear-gradient(90deg, #2563eb 0%, #6366f1 35%, #8b5cf6 65%, #2563eb 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .admin-card-body {
+    padding: 2.5rem 2.25rem 2rem;
+  }
+
+  /* Shield icon */
+  .admin-shield-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    box-shadow:
+      0 8px 24px rgba(15, 23, 42, 0.35),
+      0 0 0 4px rgba(15, 23, 42, 0.08);
+    position: relative;
+  }
+
+  .admin-shield-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px dashed rgba(99, 102, 241, 0.3);
+    animation: spinSlow 12s linear infinite;
+  }
+
+  @keyframes spinSlow {
+    to { transform: rotate(360deg); }
+  }
+
+  .admin-portal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, #0f172a, #334155);
+    color: #f1f5f9;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 0.6rem;
+  }
+
+  .admin-portal-badge i {
+    font-size: 0.65rem;
+  }
+
+  .admin-login-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0.3rem 0 0.35rem;
+    letter-spacing: -0.02em;
+  }
+
+  .admin-login-subtitle {
+    color: #64748b;
+    font-size: 0.92rem;
+    margin: 0 0 0.25rem;
+    line-height: 1.5;
+  }
+
+  /* Form styling */
+  .admin-form-group {
+    margin-bottom: 1.15rem;
+  }
+
+  .admin-form-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .admin-input-wrap {
+    position: relative;
+  }
+
+  .admin-input-wrap input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.65rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: #0f172a;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .admin-input-wrap input:focus {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  }
+
+  .admin-input-wrap input::placeholder {
+    color: #94a3b8;
+  }
+
+  .admin-input-wrap .input-icon {
+    position: absolute;
+    left: 0.95rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+    pointer-events: none;
+  }
+
+  .admin-input-wrap input:focus ~ .input-icon {
+    color: #6366f1;
+  }
+
+  /* Submit button */
+  .admin-submit-btn {
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.01em;
+  }
+
+  .admin-submit-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #2563eb 0%, #6366f1 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .admin-submit-btn:hover::before {
+    opacity: 1;
+  }
+
+  .admin-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.35);
+  }
+
+  .admin-submit-btn:active {
+    transform: translateY(0);
+  }
+
+  .admin-submit-btn span,
+  .admin-submit-btn i {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Bottom links */
+  .admin-footer-links {
+    padding: 1.25rem 2.25rem 1.75rem;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    text-align: center;
+  }
+
+  .admin-register-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.92rem;
+    text-decoration: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    transition: all 0.2s ease;
+  }
+
+  .admin-register-link:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+    transform: translateY(-1px);
+  }
+
+  /* Floating badge top-right */
+  .admin-floating-version {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.5rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Responsive */
+  @media (max-width: 520px) {
+    .admin-card-body { padding: 2rem 1.5rem 1.5rem; }
+    .admin-footer-links { padding: 1.25rem 1.5rem 1.5rem; }
+    .admin-login-title { font-size: 1.5rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-login-page">
+
+  <!-- Floating version badge -->
+  <div class="admin-floating-version">
+    <i class="fa-solid fa-lock" style="font-size:0.6rem;"></i> Secure Portal
+  </div>
+
+  <div class="admin-login-card">
+    <!-- Animated gradient accent -->
+    <div class="admin-card-accent"></div>
+
+    <div class="admin-card-body" style="text-align:center;">
+      <!-- Shield Icon -->
+      <div class="admin-shield-icon">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+
+      <!-- Portal Badge -->
+      <div class="admin-portal-badge">
+        <i class="fa-solid fa-fingerprint"></i> Administrator Portal
+      </div>
+
+      <!-- Title -->
+      <h2 class="admin-login-title">Admin Log In</h2>
+      <p class="admin-login-subtitle">
+        Secure administrator portal for system<br>management &amp; operations
+      </p>
+
+      <!-- Login Form -->
+      <form action="{{ url_for('admin_login') }}" method="POST" style="text-align:left; margin-top:1.5rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="email">
+            <i class="fa-regular fa-envelope" style="margin-right:0.25rem; font-size:0.75rem;"></i> Admin Email
+          </label>
+          <div class="admin-input-wrap">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="admin@homerental.com"
+              value="{{ email or '' }}"
+              required
+              autocomplete="email"
+            >
+            <i class="fa-regular fa-envelope input-icon"></i>
+          </div>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="password">
+            <i class="fa-solid fa-key" style="margin-right:0.25rem; font-size:0.7rem;"></i> Admin Password
+          </label>
+          <div class="admin-input-wrap">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+            >
+            <i class="fa-solid fa-lock input-icon"></i>
+          </div>
+        </div>
+
+        <button type="submit" class="admin-submit-btn">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Sign In as Administrator</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Footer Links -->
+    <div class="admin-footer-links">
+      <p style="font-size:0.82rem; color:#94a3b8; margin:0 0 0.65rem; font-weight:500;">Need an admin account?</p>
+      <a href="{{ url_for('admin_register') }}" class="admin-register-link">
+        <i class="fa-solid fa-user-plus" style="font-size:0.8rem;"></i> Register as Admin
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

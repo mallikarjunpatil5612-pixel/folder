@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Tenant Log In - Home Rental{% endblock %}
+
+{% block extra_head %}
+<style>
+  .tenant-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 30%, #eff6ff 70%, #f0f9ff 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 1rem;
+  }
+
+  /* Decorative blobs */
+  .tenant-login-page::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(234, 88, 12, 0.08) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .tenant-login-page::after {
+    content: '';
+    position: absolute;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.06) 0%, transparent 70%);
+    bottom: -80px;
+    left: -80px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .tenant-login-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow:
+      0 25px 50px -12px rgba(234, 88, 12, 0.12),
+      0 12px 24px -8px rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(234, 88, 12, 0.05);
+    overflow: hidden;
+    animation: cardFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Top accent bar */
+  .tenant-card-accent {
+    height: 5px;
+    background: linear-gradient(90deg, #f97316 0%, #ea580c 35%, #fb923c 65%, #f97316 100%);
+    background-size: 200% 100%;
+    animation: shimmerOrange 3s ease infinite;
+  }
+
+  @keyframes shimmerOrange {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .tenant-card-body {
+    padding: 2.5rem 2.25rem 2rem;
+  }
+
+  /* House icon */
+  .tenant-house-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    box-shadow:
+      0 8px 24px rgba(234, 88, 12, 0.3),
+      0 0 0 4px rgba(234, 88, 12, 0.08);
+    position: relative;
+  }
+
+  .tenant-house-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px dashed rgba(251, 146, 60, 0.35);
+    animation: spinSlow 12s linear infinite;
+  }
+
+  @keyframes spinSlow {
+    to { transform: rotate(360deg); }
+  }
+
+  .tenant-portal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 0.6rem;
+  }
+
+  .tenant-portal-badge i {
+    font-size: 0.65rem;
+  }
+
+  .tenant-login-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0.3rem 0 0.35rem;
+    letter-spacing: -0.02em;
+  }
+
+  .tenant-login-subtitle {
+    color: #64748b;
+    font-size: 0.92rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Form styling */
+  .tenant-form-group {
+    margin-bottom: 1.15rem;
+  }
+
+  .tenant-form-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .tenant-input-wrap {
+    position: relative;
+  }
+
+  .tenant-input-wrap input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.65rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: #0f172a;
+    background: #fffbf5;
+    transition: all 0.2s ease;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .tenant-input-wrap input:focus {
+    border-color: #f97316;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  }
+
+  .tenant-input-wrap input::placeholder {
+    color: #94a3b8;
+  }
+
+  .tenant-input-wrap .input-icon {
+    position: absolute;
+    left: 0.95rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+    pointer-events: none;
+  }
+
+  .tenant-input-wrap input:focus ~ .input-icon {
+    color: #f97316;
+  }
+
+  /* Submit button */
+  .tenant-submit-btn {
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px -4px rgba(234, 88, 12, 0.35);
+    letter-spacing: 0.01em;
+  }
+
+  .tenant-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -6px rgba(234, 88, 12, 0.4);
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  }
+
+  .tenant-submit-btn:active {
+    transform: translateY(0);
+  }
+
+  /* Footer */
+  .tenant-footer-links {
+    padding: 1.25rem 2.25rem 1.75rem;
+    background: #fffbf5;
+    border-top: 1px solid #fef3c7;
+    text-align: center;
+  }
+
+  .tenant-register-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    color: #ea580c;
+    font-size: 0.92rem;
+    text-decoration: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 10px;
+    border: 1.5px solid #fed7aa;
+    background: #ffffff;
+    transition: all 0.2s ease;
+  }
+
+  .tenant-register-link:hover {
+    border-color: #f97316;
+    background: #fff7ed;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.12);
+    transform: translateY(-1px);
+  }
+
+  /* Responsive */
+  @media (max-width: 520px) {
+    .tenant-card-body { padding: 2rem 1.5rem 1.5rem; }
+    .tenant-footer-links { padding: 1.25rem 1.5rem 1.5rem; }
+    .tenant-login-title { font-size: 1.5rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tenant-login-page">
+
+  <div class="tenant-login-card">
+    <!-- Animated accent bar -->
+    <div class="tenant-card-accent"></div>
+
+    <div class="tenant-card-body" style="text-align:center;">
+      <!-- House Icon -->
+      <div class="tenant-house-icon">
+        <i class="fa-solid fa-house-user"></i>
+      </div>
+
+      <!-- Portal Badge -->
+      <div class="tenant-portal-badge">
+        <i class="fa-solid fa-key"></i> Tenant Portal
+      </div>
+
+      <!-- Title -->
+      <h2 class="tenant-login-title">Tenant Log In</h2>
+      <p class="tenant-login-subtitle">
+        Welcome Back! Sign in to browse &amp; manage your rental homes
+      </p>
+
+      <!-- Login Form -->
+      <form action="{{ url_for('login', next=request.args.get('next')) }}" method="POST" style="text-align:left; margin-top:1.75rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="tenant-form-group">
+          <label class="tenant-form-label" for="email">
+            <i class="fa-regular fa-envelope" style="margin-right:0.25rem; font-size:0.75rem;"></i> Email Address
+          </label>
+          <div class="tenant-input-wrap">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="tenant@gmail.com"
+              value="{{ email or '' }}"
+              required
+              autocomplete="email"
+            >
+            <i class="fa-regular fa-envelope input-icon"></i>
+          </div>
+        </div>
+
+        <div class="tenant-form-group">
+          <label class="tenant-form-label" for="password">
+            <i class="fa-solid fa-lock" style="margin-right:0.25rem; font-size:0.7rem;"></i> Password
+          </label>
+          <div class="tenant-input-wrap">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+            >
+            <i class="fa-solid fa-lock input-icon"></i>
+          </div>
+        </div>
+
+        <button type="submit" class="tenant-submit-btn">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span>Sign In as Tenant</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Footer Links -->
+    <div class="tenant-footer-links">
+      <p style="font-size:0.82rem; color:#94a3b8; margin:0 0 0.65rem; font-weight:500;">Don't have a tenant account yet?</p>
+      <a href="{{ url_for('register') }}" class="tenant-register-link">
+        <i class="fa-solid fa-user-plus" style="font-size:0.8rem;"></i> Register as Tenant
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

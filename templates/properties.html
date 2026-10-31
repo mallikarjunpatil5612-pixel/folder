@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Rental Homes & Rooms - Home Rental{% endblock %}
+
+{% block content %}
+{% set back_url = url_for('admin_dashboard') if current_user and current_user.role == 'admin' else (url_for('customer_dashboard') if current_user else url_for('home')) %}
+<div class="container">
+  <!-- Top Go Back Navigation -->
+  <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    <a href="{{ back_url }}" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:0.45rem; font-weight:600; background:white;">
+      <i class="fa-solid fa-arrow-left"></i> Go Back{% if current_user %} to {% if current_user.role == 'admin' %}Admin Dashboard{% else %}Tenant Dashboard{% endif %}{% endif %}
+    </a>
+  </div>
+
+  <!-- Search & Filter Form Header -->
+  <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+      <h1 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--text-main);">
+        <i class="fa-solid fa-magnifying-glass" style="color:var(--brand-orange)"></i> Search Rental Properties
+      </h1>
+      <a href="{{ back_url }}" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem; font-weight:600;">
+        <i class="fa-solid fa-arrow-left"></i> Go Back
+      </a>
+    </div>
+
+    <form action="{{ url_for('properties_listing') }}" method="GET">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <!-- City Input -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">City / Location</label>
+          <input type="text" name="city" class="form-control" placeholder="e.g. Tumakuru, Bengaluru" value="{{ filters.city }}">
+        </div>
+
+        <!-- Property Type -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Property Type</label>
+          <select name="property_type" class="form-control">
+            <option value="">All Types</option>
+            {% for pt in property_types %}
+              <option value="{{ pt }}" {% if filters.property_type == pt %}selected{% endif %}>{{ pt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Bedrooms -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Bedrooms</label>
+          <select name="bedrooms" class="form-control">
+            <option value="">Any</option>
+            <option value="1" {% if filters.bedrooms == '1' %}selected{% endif %}>1 BHK</option>
+            <option value="2" {% if filters.bedrooms == '2' %}selected{% endif %}>2 BHK</option>
+            <option value="3" {% if filters.bedrooms == '3' %}selected{% endif %}>3 BHK</option>
+            <option value="4" {% if filters.bedrooms == '4' %}selected{% endif %}>4+ BHK</option>
+          </select>
+        </div>
+
+        <!-- Max Rent -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Max Budget (₹/month)</label>
+          <input type="number" name="max_rent" class="form-control" placeholder="e.g. 25000" value="{{ filters.max_rent }}">
+        </div>
+
+        <!-- Furnishing -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Furnishing</label>
+          <select name="furnishing" class="form-control">
+            <option value="">Any</option>
+            {% for f in furnishing_statuses %}
+              <option value="{{ f }}" {% if filters.furnishing == f %}selected{% endif %}>{{ f }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Sort By -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Sort By</label>
+          <select name="sort_by" class="form-control">
+            <option value="newest" {% if filters.sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+            <option value="rent_low_high" {% if filters.sort_by == 'rent_low_high' %}selected{% endif %}>Rent: Low to High</option>
+            <option value="rent_high_low" {% if filters.sort_by == 'rent_high_low' %}selected{% endif %}>Rent: High to Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.25rem; flex-wrap:wrap; gap:0.75rem;">
+        <a href="{{ back_url }}" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem;">
+          <i class="fa-solid fa-arrow-left"></i> Go Back
+        </a>
+        <div style="display:flex; gap:0.75rem;">
+          <a href="{{ url_for('properties_listing') }}" class="btn btn-outline btn-sm">Reset Filters</a>
+          <button type="submit" class="btn btn-orange btn-sm">
+            <i class="fa-solid fa-filter"></i> Apply Filters
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Listings Result Count -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+    <h2 style="font-size:1.25rem; font-weight:700; color:var(--text-main);">
+      Available Homes & Rooms ({{ properties|length }})
+    </h2>
+  </div>
+
+  <!-- Property Cards Grid -->
+  {% if properties and properties|length > 0 %}
+    <div class="properties-grid">
+      {% for prop in properties %}
+        <div class="property-card">
+          <div class="card-img-wrapper">
+            {% if prop.property_images and prop.property_images|length > 0 %}
+              <img src="{{ prop.property_images[0].image_url }}" alt="{{ prop.title }}" loading="lazy">
+            {% else %}
+              <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80" alt="{{ prop.title }}" loading="lazy">
+            {% endif %}
+
+            <span class="property-badge-type">{{ prop.property_type }}</span>
+
+            {% if current_user and current_user.role == 'customer' %}
+              <button class="fav-btn {% if prop.id in user_fav_ids %}active{% endif %}" data-property-id="{{ prop.id }}" title="Save to Favourites">
+                <i class="{% if prop.id in user_fav_ids %}fa-solid{% else %}fa-regular{% endif %} fa-heart"></i>
+              </button>
+            {% endif %}
+          </div>
+
+          <div class="card-body">
+            <h3 class="card-title">{{ prop.title }}</h3>
+            <div class="card-location">
+              <i class="fa-solid fa-location-dot" style="color:var(--brand-orange)"></i>
+              <span>{{ prop.locality or prop.city }}, {{ prop.city }}</span>
+            </div>
+
+            <div class="card-meta">
+              <div class="meta-item">
+                <i class="fa-solid fa-bed"></i> {{ prop.bedrooms }} BHK
+              </div>
+              <div class="meta-item">
+                <i class="fa-solid fa-bath"></i> {{ prop.bathrooms }} Bath
+              </div>
+              <div class="meta-item">
+                <i class="fa-solid fa-couch"></i> {{ prop.furnishing_status }}
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <div class="card-price">
+                ₹{{ "{:,.0f}".format(prop.monthly_rent) }} <span>/ month</span>
+              </div>
+              <a href="{{ url_for('property_details', property_id=prop.id) }}" class="btn btn-primary btn-sm">
+                View Details
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:3.5rem 1.5rem; text-align:center;">
+      <i class="fa-solid fa-house-chimney-crack" style="font-size:3rem; color:#94a3b8; margin-bottom:1rem;"></i>
+      <h3 style="font-size:1.35rem; color:var(--text-main); margin-bottom:0.5rem;">No properties matched your criteria</h3>
+      <p style="color:var(--text-muted); max-width:500px; margin:0 auto 1.5rem;">
+        Try adjusting your search filters or clear filters to view all available verified rental homes.
+      </p>
+      <a href="{{ url_for('properties_listing') }}" class="btn btn-outline-primary">Clear All Filters</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

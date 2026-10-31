@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Dashboard - Home Rental{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+  <!-- Owner Sidebar (Matching Mockup) -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <i class="fa-solid fa-house-user"></i>
+      <span>Owner Portal</span>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="active"><a href="#overview"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+      <li><a href="{{ url_for('add_property') }}"><i class="fa-solid fa-plus-circle"></i> Add Home</a></li>
+      <li><a href="#my-homes"><i class="fa-solid fa-house"></i> My Homes</a></li>
+      <li><a href="#added-rooms"><i class="fa-solid fa-door-open"></i> Added Rooms</a></li>
+      <li><a href="#enquiries"><i class="fa-solid fa-envelope"></i> Enquiries</a></li>
+      <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Dashboard Main Content -->
+  <main class="dashboard-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <div>
+        <h1 style="font-size:1.75rem; font-weight:800; color:var(--text-main);">Welcome, {{ current_user.name }}</h1>
+        <p style="color:var(--text-muted); font-size:0.92rem;">Manage your homes, room availability, and tenant rental enquiries.</p>
+      </div>
+      <a href="{{ url_for('add_property') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Add New Home
+      </a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon stat-blue"><i class="fa-solid fa-house"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.total }}</div>
+          <div class="stat-label">Total Homes</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-green"><i class="fa-solid fa-check-circle"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.approved }}</div>
+          <div class="stat-label">Approved & Active</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-orange"><i class="fa-solid fa-clock"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.pending }}</div>
+          <div class="stat-label">Pending Approval</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-blue"><i class="fa-solid fa-door-open"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.total_rooms }}</div>
+          <div class="stat-label">Added Rooms</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-green"><i class="fa-solid fa-comments"></i></div>
+        <div>
+          <div class="stat-number">{{ stats.enquiries }}</div>
+          <div class="stat-label">Tenant Enquiries</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Homes Section -->
+    <div class="dashboard-panel" id="my-homes">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="fa-solid fa-house" style="color:var(--primary)"></i> My Listed Homes</h2>
+        <a href="{{ url_for('add_property') }}" class="btn btn-outline-primary btn-sm">+ Add Home</a>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        {% if properties and properties|length > 0 %}
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Home</th>
+                <th>Type</th>
+                <th>Rent</th>
+                <th>Location</th>
+                <th>Approval Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in properties %}
+                <tr>
+                  <td>
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                      <div style="width:50px; height:45px; border-radius:6px; overflow:hidden; background:#e2e8f0; flex-shrink:0;">
+                        {% if p.property_images and p.property_images|length > 0 %}
+                          <img src="{{ p.property_images[0].image_url }}" style="width:100%; height:100%; object-fit:cover;">
+                        {% else %}
+                          <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=200&q=80" style="width:100%; height:100%; object-fit:cover;">
+                        {% endif %}
+                      </div>
+                      <div>
+                        <strong><a href="{{ url_for('property_details', property_id=p.id) }}">{{ p.title }}</a></strong>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">{{ p.bedrooms }} BHK • {{ p.area_sqft }} sqft</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ p.property_type }}</td>
+                  <td style="color:var(--success); font-weight:700;">₹{{ "{:,.0f}".format(p.monthly_rent) }}/mo</td>
+                  <td>{{ p.city }}</td>
+                  <td>
+                    {% if p.approval_status == 'approved' %}
+                      <span class="status-pill pill-available">Approved</span>
+                    {% elif p.approval_status == 'pending' %}
+                      <span class="status-pill pill-pending">Pending Review</span>
+                    {% else %}
+                      <span class="status-pill pill-booked" title="{{ p.rejection_reason or 'Rejected' }}">Rejected</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div style="display:flex; gap:0.4rem;">
+                      <a href="{{ url_for('property_details', property_id=p.id) }}" class="btn btn-outline btn-sm" title="View Details">
+                        <i class="fa-solid fa-eye"></i>
+                      </a>
+                      <a href="{{ url_for('edit_property', property_id=p.id) }}" class="btn btn-outline btn-sm" title="Edit">
+                        <i class="fa-solid fa-pen"></i>
+                      </a>
+                      <form action="{{ url_for('delete_property', property_id=p.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this property permanently?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:#fecaca;" title="Delete">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div style="padding:2.5rem; text-align:center; color:var(--text-muted);">
+            <i class="fa-solid fa-house-chimney" style="font-size:2.5rem; color:#cbd5e1; margin-bottom:0.75rem;"></i>
+            <p>You haven't listed any homes yet.</p>
+            <a href="{{ url_for('add_property') }}" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">
+              <i class="fa-solid fa-plus"></i> Add Your First Home
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Added Rooms Section (Matching Mockup) -->
+    <div class="dashboard-panel" id="added-rooms">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="fa-solid fa-door-open" style="color:var(--brand-orange)"></i> Added Rooms</h2>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        {% if rooms and rooms|length > 0 %}
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Home</th>
+                <th>Room Type</th>
+                <th>Size</th>
+                <th>Price</th>
+                <th>Availability</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in rooms %}
+                <tr>
+                  <td><strong>{{ r.property_title }}</strong></td>
+                  <td>{{ r.room_type }}</td>
+                  <td>{{ r.size }}</td>
+                  <td style="color:var(--success); font-weight:700;">₹{{ "{:,.0f}".format(r.price) }}</td>
+                  <td>
+                    <span class="status-pill {% if r.availability == 'Available' %}pill-available{% else %}pill-booked{% endif %}">
+                      {{ r.availability }}
+                    </span>
+                  </td>
+                  <td>
+                    <div style="display:flex; gap:0.4rem;">
+                      <form action="{{ url_for('toggle_room_availability', room_id=r.id) }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="availability" value="{{ 'Booked' if r.availability == 'Available' else 'Available' }}">
+                        <button type="submit" class="btn btn-outline btn-sm">
+                          {{ 'Mark Booked' if r.availability == 'Available' else 'Mark Available' }}
+                        </button>
+                      </form>
+                      <form action="{{ url_for('delete_room', room_id=r.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Remove room?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:#fecaca;">
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div style="padding:2rem; text-align:center; color:var(--text-muted);">
+            <p>No individual rooms added yet. Go to your home details to add rooms.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Rental Enquiries Section -->
+    <div class="dashboard-panel" id="enquiries">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="fa-solid fa-comments" style="color:var(--primary)"></i> Received Enquiries</h2>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        {% if enquiries and enquiries|length > 0 %}
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Home / Room</th>
+                <th>Tenant Message</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for enq in enquiries %}
+                <tr>
+                  <td>
+                    <strong>{{ enq.properties.title if enq.properties else 'Home' }}</strong>
+                    {% if enq.rooms %}
+                      <div style="font-size:0.8rem; color:var(--primary);">Room: {{ enq.rooms.room_type }}</div>
+                    {% endif %}
+                  </td>
+                  <td style="max-width:350px;">
+                    <div style="font-size:0.9rem; color:var(--text-main);">"{{ enq.message }}"</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">
+                      {{ enq.created_at[:10] if enq.created_at else '' }}
+                    </div>
+                  </td>
+                  <td>
+                    <span class="status-pill {% if enq.status == 'approved' or enq.status == 'contacted' %}pill-available{% else %}pill-pending{% endif %}">
+                      {{ enq.status.capitalize() }}
+                    </span>
+                  </td>
+                  <td>
+                    <form action="{{ url_for('update_enquiry_status', enquiry_id=enq.id) }}" method="POST" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                      {% if enq.status == 'pending' %}
+                        <input type="hidden" name="status" value="contacted">
+                        <button type="submit" class="btn btn-outline btn-sm">Mark Contacted</button>
+                      {% elif enq.status == 'contacted' %}
+                        <input type="hidden" name="status" value="closed">
+                        <button type="submit" class="btn btn-outline btn-sm">Close</button>
+                      {% else %}
+                        <span style="font-size:0.85rem; color:var(--text-muted);">Completed</span>
+                      {% endif %}
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div style="padding:2rem; text-align:center; color:var(--text-muted);">
+            <p>No enquiries received yet.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

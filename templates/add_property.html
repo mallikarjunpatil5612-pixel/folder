@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}{% if current_user and current_user.role == 'admin' %}Add New Home - Admin Portal{% else %}Add New Home - Owner Portal{% endif %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    {% if current_user and current_user.role == 'admin' %}
+      <ul class="sidebar-nav" id="adminSidebarNav">
+        <li><a href="{{ url_for('admin_dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+        <li><a href="{{ url_for('admin_dashboard') }}#manage-users"><i class="fa-solid fa-users"></i> Users</a></li>
+        <li><a href="{{ url_for('admin_dashboard') }}#recent-listings"><i class="fa-solid fa-house"></i> Homes</a></li>
+        <li class="active"><a href="{{ url_for('add_property') }}"><i class="fa-solid fa-plus-circle"></i> Add Home</a></li>
+        <li><a href="{{ url_for('admin_dashboard') }}#audit-logs"><i class="fa-solid fa-clock-rotate-left"></i> Logs</a></li>
+        <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+      </ul>
+    {% elif current_user and current_user.role == 'customer' %}
+      <div class="sidebar-header">
+        <i class="fa-solid fa-user-check"></i>
+        <span>Tenant Portal</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="{{ url_for('customer_dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+        <li><a href="{{ url_for('properties_listing') }}"><i class="fa-solid fa-magnifying-glass"></i> Browse Homes</a></li>
+        <li class="active"><a href="{{ url_for('add_property') }}"><i class="fa-solid fa-plus-circle"></i> Add Home</a></li>
+        <li><a href="{{ url_for('customer_dashboard') }}#saved-favourites"><i class="fa-solid fa-heart"></i> Saved Homes</a></li>
+        <li><a href="{{ url_for('customer_dashboard') }}#my-enquiries"><i class="fa-solid fa-comments"></i> My Enquiries</a></li>
+        <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+      </ul>
+    {% else %}
+      <div class="sidebar-header">
+        <i class="fa-solid fa-house-user"></i>
+        <span>Owner Portal</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="{{ url_for('owner_dashboard') }}"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+        <li class="active"><a href="{{ url_for('add_property') }}"><i class="fa-solid fa-plus-circle"></i> Add Home</a></li>
+        <li><a href="{{ url_for('owner_dashboard') }}#my-homes"><i class="fa-solid fa-house"></i> My Homes</a></li>
+        <li><a href="{{ url_for('owner_dashboard') }}#added-rooms"><i class="fa-solid fa-door-open"></i> Added Rooms</a></li>
+        <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+      </ul>
+    {% endif %}
+  </aside>
+
+  <!-- Dashboard Main Content: Add Home Form (Matching Mockup) -->
+  <main class="dashboard-content">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-house-medical" style="color:var(--brand-orange)"></i> Add Home</h2>
+          <a href="{% if current_user and current_user.role == 'admin' %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('owner_dashboard') }}{% endif %}" class="btn btn-outline btn-sm">Cancel</a>
+        </div>
+
+        <div class="panel-body">
+          <form action="{{ url_for('add_property') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <!-- Home Title -->
+            <div class="form-group">
+              <label class="form-label" for="title">Home Title *</label>
+              <input 
+                type="text" 
+                id="title" 
+                name="title" 
+                class="form-control" 
+                placeholder="Enter home title (e.g. Modern 3BHK Family Villa)" 
+                value="{{ form_data.title or '' }}" 
+                required
+              >
+            </div>
+
+            <!-- Property Type & Rent & Deposit Grid -->
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="property_type">Property Type *</label>
+                <select id="property_type" name="property_type" class="form-control" required>
+                  {% for ptype in property_types %}
+                    <option value="{{ ptype }}" {% if form_data.property_type == ptype %}selected{% endif %}>{{ ptype }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="monthly_rent">Monthly Rent (₹) *</label>
+                <input 
+                  type="number" 
+                  id="monthly_rent" 
+                  name="monthly_rent" 
+                  class="form-control" 
+                  placeholder="15000" 
+                  value="{{ form_data.monthly_rent or '' }}" 
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="security_deposit">Security Deposit (₹)</label>
+                <input 
+                  type="number" 
+                  id="security_deposit" 
+                  name="security_deposit" 
+                  class="form-control" 
+                  placeholder="30000" 
+                  value="{{ form_data.security_deposit or '' }}"
+                >
+              </div>
+            </div>
+
+            <!-- Location Address & City -->
+            <div class="form-grid">
+              <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label" for="address">Full Address / Location *</label>
+                <input 
+                  type="text" 
+                  id="address" 
+                  name="address" 
+                  class="form-control" 
+                  placeholder="Enter location / street address" 
+                  value="{{ form_data.address or '' }}" 
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="city">City *</label>
+                <input 
+                  type="text" 
+                  id="city" 
+                  name="city" 
+                  class="form-control" 
+                  placeholder="Tumakuru" 
+                  value="{{ form_data.city or '' }}" 
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="locality">Locality / Landmark</label>
+                <input 
+                  type="text" 
+                  id="locality" 
+                  name="locality" 
+                  class="form-control" 
+                  placeholder="Near B.H. Road" 
+                  value="{{ form_data.locality or '' }}"
+                >
+              </div>
+            </div>
+
+            <!-- Dimensions & Specifications -->
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="bedrooms">Bedrooms (BHK) *</label>
+                <input type="number" id="bedrooms" name="bedrooms" class="form-control" min="0" value="{{ form_data.bedrooms or '2' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="bathrooms">Bathrooms *</label>
+                <input type="number" id="bathrooms" name="bathrooms" class="form-control" min="0" value="{{ form_data.bathrooms or '2' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="balconies">Balconies</label>
+                <input type="number" id="balconies" name="balconies" class="form-control" min="0" value="{{ form_data.balconies or '1' }}">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="area_sqft">Square Footage (sqft) *</label>
+                <input type="number" id="area_sqft" name="area_sqft" class="form-control" placeholder="1200" value="{{ form_data.area_sqft or '' }}" required>
+              </div>
+            </div>
+
+            <!-- Utilities & Contact -->
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="water_available">Water Availability</label>
+                <select id="water_available" name="water_available" class="form-control">
+                  {% for w in water_options %}
+                    <option value="{{ w }}">{{ w }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="contact_phone">Contact Phone Number</label>
+                <input type="tel" id="contact_phone" name="contact_phone" class="form-control" placeholder="+91 98765 43210" value="{{ form_data.contact_phone or '' }}">
+              </div>
+            </div>
+
+            <!-- Parking Checkbox -->
+            <div class="form-group">
+              <label class="checkbox-item">
+                <input type="checkbox" name="parking_available" {% if form_data.parking_available %}checked{% endif %}>
+                <span>Dedicated Car / Two-Wheeler Parking Available</span>
+              </label>
+            </div>
+
+            <!-- Amenities Checkboxes -->
+            <div class="form-group">
+              <label class="form-label">Amenities & Features</label>
+              <div class="checkbox-group">
+                {% for am in standard_amenities %}
+                  <label class="checkbox-item">
+                    <input type="checkbox" name="amenities" value="{{ am }}">
+                    <span>{{ am }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <label class="form-label" for="description">Home Description</label>
+              <textarea 
+                id="description" 
+                name="description" 
+                class="form-control" 
+                rows="4" 
+                placeholder="Enter description (e.g. Spacious airy home close to schools and public transportation...)"
+              >{{ form_data.description or '' }}</textarea>
+            </div>
+
+            <!-- Upload Photos (Choose Files) -->
+            <div class="form-group">
+              <label class="form-label" for="photo-input">Upload Photos (Supabase Storage)</label>
+              <input 
+                type="file" 
+                id="photo-input" 
+                name="photos" 
+                class="form-control" 
+                multiple 
+                accept="image/png, image/jpeg, image/webp"
+              >
+              <small style="color:var(--text-muted); display:block; margin-top:0.25rem;">
+                Select up to 10 photos (.jpg, .png, .webp). Max 5MB per file.
+              </small>
+              <div id="photo-preview" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem;"></div>
+            </div>
+
+            <!-- Submit Button (Add Home) -->
+            <div style="margin-top:2rem;">
+              <button type="submit" class="btn btn-primary btn-lg btn-block">
+                <i class="fa-solid fa-house-medical"></i> Add Home
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us - Home Rental{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="text-align:center; max-width:700px; margin:0 auto 3rem;">
+    <h1 style="font-size:2.25rem; font-weight:800; color:var(--text-main); margin-bottom:0.75rem;">Get in Touch</h1>
+    <p style="color:var(--text-muted); font-size:1.05rem;">
+      Have questions about listing a home, booking a room, or account verification? Our support team is here to assist.
+    </p>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1.25fr; gap:3rem; max-width:1050px; margin:0 auto 4rem;">
+    <!-- Contact Info Cards -->
+    <div>
+      <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:2rem; box-shadow:var(--shadow-sm); margin-bottom:1.5rem;">
+        <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:1.25rem;">Contact Information</h3>
+
+        <div style="display:flex; gap:1rem; margin-bottom:1.25rem;">
+          <div style="width:44px; height:44px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="fa-solid fa-location-dot"></i>
+          </div>
+          <div>
+            <div style="font-weight:700; color:var(--text-main);">Main Office</div>
+            <div style="font-size:0.9rem; color:var(--text-muted);">B.H. Road, Tumakuru, Karnataka 572102</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:1rem; margin-bottom:1.25rem;">
+          <div style="width:44px; height:44px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="fa-solid fa-phone"></i>
+          </div>
+          <div>
+            <div style="font-weight:700; color:var(--text-main);">Phone Support</div>
+            <div style="font-size:0.9rem; color:var(--text-muted);">+91 98765 43210 / 1800-555-HOME</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:1rem;">
+          <div style="width:44px; height:44px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="fa-solid fa-envelope"></i>
+          </div>
+          <div>
+            <div style="font-weight:700; color:var(--text-main);">Email Inquiries</div>
+            <div style="font-size:0.9rem; color:var(--text-muted);">support@homerental.com</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--primary-light); border: 1px solid var(--primary-border); border-radius:var(--radius-lg); padding:1.5rem;">
+        <h4 style="font-weight:700; color:var(--primary); margin-bottom:0.4rem;">Office Hours</h4>
+        <p style="font-size:0.88rem; color:var(--text-sub);">Monday – Saturday: 9:00 AM – 7:00 PM IST</p>
+        <p style="font-size:0.88rem; color:var(--text-sub);">Sunday: 10:00 AM – 4:00 PM IST</p>
+      </div>
+    </div>
+
+    <!-- Contact Message Form -->
+    <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:2.5rem; box-shadow:var(--shadow-md);">
+      <h3 style="font-size:1.35rem; font-weight:800; margin-bottom:1.25rem; color:var(--text-main);">Send Us a Message</h3>
+
+      <form action="{{ url_for('contact') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="form-group">
+          <label class="form-label" for="name">Your Name *</label>
+          <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" value="{{ name or '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address *</label>
+          <input type="email" id="email" name="email" class="form-control" placeholder="john@example.com" value="{{ email or '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="subject">Subject</label>
+          <input type="text" id="subject" name="subject" class="form-control" placeholder="Listing inquiry / Room availability" value="{{ subject or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="message">Message *</label>
+          <textarea id="message" name="message" class="form-control" rows="5" placeholder="How can we assist you today?" required>{{ message or '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-orange btn-block btn-lg" style="margin-top:1rem;">
+          <i class="fa-solid fa-paper-plane"></i> Send Message
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

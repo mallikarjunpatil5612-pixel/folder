@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}{{ property.title }} - Home Rental{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Breadcrumb & Top Bar -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+    <a href="{{ url_for('properties_listing') }}" style="color:var(--text-muted); font-size:0.92rem; display:flex; align-items:center; gap:0.4rem;">
+      <i class="fa-solid fa-arrow-left"></i> Back to all listings
+    </a>
+
+    <div style="display:flex; gap:0.75rem; align-items:center;">
+      {% if is_owner or is_admin %}
+        <a href="{{ url_for('edit_property', property_id=property.id) }}" class="btn btn-outline btn-sm">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Listing
+        </a>
+      {% endif %}
+
+      {% if current_user and current_user.role == 'customer' %}
+        <button class="btn btn-outline btn-sm fav-btn {% if is_favourite %}active{% endif %}" data-property-id="{{ property.id }}" style="position:static;">
+          <i class="{% if is_favourite %}fa-solid{% else %}fa-regular{% endif %} fa-heart" style="color:#ef4444;"></i>
+          <span>Save</span>
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Main Grid (Left 2 cols: Gallery, Details, Rooms, Map; Right 1 col: Rent Card & Enquiry Form) -->
+  <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- Gallery Showcase -->
+      <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:2rem; box-shadow:var(--shadow-sm);">
+        <div id="main-image-container" style="height: 420px; background:#f1f5f9; overflow:hidden;">
+          {% if property.property_images and property.property_images|length > 0 %}
+            <img id="main-image" src="{{ property.property_images[0].image_url }}" alt="{{ property.title }}" style="width:100%; height:100%; object-fit:cover;">
+          {% else %}
+            <img id="main-image" src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80" alt="{{ property.title }}" style="width:100%; height:100%; object-fit:cover;">
+          {% endif %}
+        </div>
+
+        <!-- Thumbnails Strip -->
+        {% if property.property_images and property.property_images|length > 1 %}
+          <div style="display:flex; gap:0.75rem; padding:1rem; overflow-x:auto; background:#ffffff; border-top:1px solid var(--border-color);">
+            {% for img in property.property_images %}
+              <div onclick="document.getElementById('main-image').src = '{{ img.image_url }}'" style="width:90px; height:65px; border-radius:var(--radius-sm); overflow:hidden; cursor:pointer; flex-shrink:0; border:2px solid transparent;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='transparent'">
+                <img src="{{ img.image_url }}" style="width:100%; height:100%; object-fit:cover;">
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Property Summary -->
+      <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:2rem; margin-bottom:2rem; box-shadow:var(--shadow-sm);">
+        <div style="display:flex; gap:0.65rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+          <span style="background:var(--primary-light); color:var(--primary); padding:0.3rem 0.75rem; border-radius:var(--radius-full); font-size:0.8rem; font-weight:600;">
+            {{ property.property_type }}
+          </span>
+          <span style="background:var(--success-light); color:var(--success); padding:0.3rem 0.75rem; border-radius:var(--radius-full); font-size:0.8rem; font-weight:600;">
+            {{ property.furnishing_status }}
+          </span>
+          {% if property.approval_status != 'approved' %}
+            <span class="status-pill pill-pending">Pending Approval</span>
+          {% endif %}
+        </div>
+
+        <h1 style="font-size: 1.85rem; font-weight:800; color:var(--text-main); line-height:1.25; margin-bottom:0.5rem;">
+          {{ property.title }}
+        </h1>
+        <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.5rem;">
+          <i class="fa-solid fa-location-dot" style="color:var(--brand-orange)"></i>
+          <span>{{ property.address }}, {{ property.locality or '' }} {{ property.city }}</span>
+        </p>
+
+        <!-- Key Specs Grid -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:1rem; padding:1.25rem; background:#f8fafc; border-radius:var(--radius-md); border:1px solid var(--border-color); margin-bottom:1.75rem;">
+          <div>
+            <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase;">Bedrooms</div>
+            <div style="font-size:1.15rem; font-weight:700; color:var(--text-main); margin-top:0.2rem;"><i class="fa-solid fa-bed" style="color:var(--primary)"></i> {{ property.bedrooms }} BHK</div>
+          </div>
+          <div>
+            <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase;">Bathrooms</div>
+            <div style="font-size:1.15rem; font-weight:700; color:var(--text-main); margin-top:0.2rem;"><i class="fa-solid fa-bath" style="color:var(--primary)"></i> {{ property.bathrooms }} Bath</div>
+          </div>
+          <div>
+            <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase;">Balconies</div>
+            <div style="font-size:1.15rem; font-weight:700; color:var(--text-main); margin-top:0.2rem;"><i class="fa-solid fa-sun" style="color:var(--primary)"></i> {{ property.balconies }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase;">Carpet Area</div>
+            <div style="font-size:1.15rem; font-weight:700; color:var(--text-main); margin-top:0.2rem;"><i class="fa-solid fa-ruler-combined" style="color:var(--primary)"></i> {{ property.area_sqft }} sqft</div>
+          </div>
+          <div>
+            <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase;">Parking</div>
+            <div style="font-size:1.15rem; font-weight:700; color:var(--text-main); margin-top:0.2rem;"><i class="fa-solid fa-square-parking" style="color:var(--primary)"></i> {{ 'Available' if property.parking_available else 'None' }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase;">Water Supply</div>
+            <div style="font-size:1.15rem; font-weight:700; color:var(--text-main); margin-top:0.2rem;"><i class="fa-solid fa-faucet-drip" style="color:var(--primary)"></i> {{ property.water_available }}</div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.75rem;">About This Home</h3>
+        <p style="color:var(--text-sub); line-height:1.7; margin-bottom:2rem; white-space:pre-line;">
+          {{ property.description or 'No detailed description provided for this listing.' }}
+        </p>
+
+        <!-- Amenities -->
+        <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:1rem;">Amenities & Features</h3>
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:0.85rem; margin-bottom:2rem;">
+          {% if property.amenities and property.amenities|length > 0 %}
+            {% for am in property.amenities %}
+              <div style="display:flex; align-items:center; gap:0.65rem; font-size:0.92rem; color:var(--text-sub);">
+                <i class="fa-solid fa-circle-check" style="color:var(--success);"></i>
+                <span>{{ am }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p style="color:var(--text-muted); font-size:0.9rem;">Standard residential amenities available.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Available Rooms Section (Matching Rental & Owner Views in Mockup) -->
+      <div class="dashboard-panel" style="margin-bottom:2rem;">
+        <div class="panel-header">
+          <h3 class="panel-title"><i class="fa-solid fa-door-open" style="color:var(--brand-orange)"></i> Available Rooms</h3>
+          {% if is_owner or is_rental or is_admin %}
+            <button onclick="openModal('addRoomModal')" class="btn btn-primary btn-sm">
+              <i class="fa-solid fa-plus"></i> Add Room
+            </button>
+          {% endif %}
+        </div>
+        <div class="panel-body" style="padding:0;">
+          {% if rooms and rooms|length > 0 %}
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Room Type</th>
+                  <th>Size</th>
+                  <th>Monthly Rent</th>
+                  <th>Availability</th>
+                  {% if is_owner or is_rental or is_admin %}
+                    <th>Actions</th>
+                  {% else %}
+                    <th>Action</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for room in rooms %}
+                  <tr>
+                    <td><strong>{{ room.room_type }}</strong></td>
+                    <td>{{ room.size }}</td>
+                    <td style="color:var(--success); font-weight:700;">₹{{ "{:,.0f}".format(room.price) }}/mo</td>
+                    <td>
+                      <span class="status-pill {% if room.availability == 'Available' %}pill-available{% else %}pill-booked{% endif %}">
+                        {{ room.availability }}
+                      </span>
+                    </td>
+                    <td>
+                      {% if is_owner or is_rental or is_admin %}
+                        <form action="{{ url_for('delete_room', room_id=room.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Remove this room?');">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                          <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:#fecaca;">
+                            <i class="fa-solid fa-trash"></i>
+                          </button>
+                        </form>
+                      {% else %}
+                        {% if current_user and current_user.role == 'customer' %}
+                          <button onclick="selectRoomForEnquiry('{{ room.id }}', '{{ room.room_type }}')" class="btn btn-outline-primary btn-sm">
+                            Enquire
+                          </button>
+                        {% else %}
+                          <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm">Book</a>
+                        {% endif %}
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div style="padding:2rem; text-align:center; color:var(--text-muted);">
+              <p>No individual rooms added yet. The whole home is available for rent.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Map Location Section (Leaflet OpenStreetMap) -->
+      <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:2rem; margin-bottom:2rem; box-shadow:var(--shadow-sm);">
+        <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.75rem;">
+          <i class="fa-solid fa-map-location-dot" style="color:var(--primary)"></i> Location & Neighborhood
+        </h3>
+        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">
+          {{ property.address }}, {{ property.locality or '' }} {{ property.city }}
+        </p>
+        <div id="property-map" 
+             data-lat="{{ property.latitude or 13.3392 }}" 
+             data-lng="{{ property.longitude or 77.1017 }}" 
+             data-title="{{ property.title }}" 
+             data-city="{{ property.city }}" 
+             style="height: 320px; border-radius:var(--radius-md); z-index:1; border:1px solid var(--border-color);"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN (Pricing Card, Owner Contact, and Rental Enquiry Form) -->
+    <div>
+      <div style="background:white; border: 1px solid var(--border-color); border-radius:var(--radius-lg); padding:1.75rem; box-shadow:var(--shadow-md); position:sticky; top:90px;">
+        <!-- Price Banner -->
+        <div style="margin-bottom:1.5rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border-color);">
+          <div style="font-size:0.85rem; color:var(--text-muted);">Monthly Rent</div>
+          <div style="font-size:2.2rem; font-weight:800; color:var(--success); line-height:1.1;">
+            ₹{{ "{:,.0f}".format(property.monthly_rent) }}
+            <span style="font-size:0.9rem; font-weight:500; color:var(--text-muted);">/ month</span>
+          </div>
+          <div style="font-size:0.88rem; color:var(--text-muted); margin-top:0.4rem;">
+            Security Deposit: <strong>₹{{ "{:,.0f}".format(property.security_deposit) }}</strong>
+          </div>
+        </div>
+
+        <!-- Owner Contact Info -->
+        <div style="background:#f8fafc; border-radius:var(--radius-md); padding:1rem; border:1px solid var(--border-color); margin-bottom:1.5rem;">
+          <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.35rem;">
+            Homeowner / Host
+          </div>
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <div style="width:40px; height:40px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700;">
+              <i class="fa-solid fa-house-user"></i>
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:0.95rem;">{{ property.users.name if property.users else 'Verified Owner' }}</div>
+              <div style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-solid fa-phone"></i> {{ property.contact_phone or property.users.phone or '+91 98XXX XXXXX' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rental Enquiry Form -->
+        <h4 style="font-size:1.05rem; font-weight:700; margin-bottom:0.75rem;">Send Rental Enquiry</h4>
+        {% if current_user and current_user.role == 'customer' %}
+          <form action="{{ url_for('submit_enquiry', property_id=property.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" id="selected_room_id" name="room_id" value="">
+
+            <div id="room_selection_note" style="display:none; padding:0.4rem 0.65rem; background:var(--primary-light); color:var(--primary); font-size:0.82rem; border-radius:var(--radius-sm); margin-bottom:0.75rem;">
+              Enquiring for room: <strong id="room_name_badge"></strong>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="font-size:0.85rem;">Your Message to Owner</label>
+              <textarea name="message" class="form-control" rows="4" placeholder="Hello, I am interested in renting this home. When can I schedule a visit?" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-orange btn-block">
+              <i class="fa-solid fa-paper-plane"></i> Send Rental Enquiry
+            </button>
+          </form>
+        {% elif not current_user %}
+          <div style="text-align:center; padding:1.25rem 0.5rem; background:#f8fafc; border-radius:var(--radius-md); border:1px dashed var(--border-color);">
+            <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.85rem;">
+              Please log in as a Tenant to send rental enquiries or book this home.
+            </p>
+            <a href="{{ url_for('login', next=request.path) }}" class="btn btn-primary btn-block">
+              Login to Enquire
+            </a>
+          </div>
+        {% else %}
+          <div style="text-align:center; padding:1rem; background:#f8fafc; border-radius:var(--radius-md);">
+            <p style="font-size:0.85rem; color:var(--text-muted);">
+              You are signed in as an <strong>{{ current_user.role.capitalize() }}</strong>. Sign in as Tenant to submit enquiries.
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Room (For Owner / Rental / Admin) -->
+<div id="addRoomModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; align-items:center; justify-content:center; padding:1rem;">
+  <div style="background:white; border-radius:var(--radius-lg); width:100%; max-width:480px; padding:2rem; box-shadow:var(--shadow-hover);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <h3 style="font-size:1.25rem; font-weight:700;">Add Room to Home</h3>
+      <button onclick="closeModal('addRoomModal')" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+    </div>
+
+    <form action="{{ url_for('add_room', property_id=property.id) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <div class="form-group">
+        <label class="form-label">Room Type</label>
+        <select name="room_type" class="form-control" required>
+          {% for rtype in room_types %}
+            <option value="{{ rtype }}">{{ rtype }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Dimensions / Size</label>
+        <input type="text" name="size" class="form-control" placeholder="e.g. 12 x 10 ft" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Monthly Price (₹)</label>
+        <input type="number" name="price" class="form-control" placeholder="e.g. 5000" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Availability</label>
+        <select name="availability" class="form-control">
+          <option value="Available">Available</option>
+          <option value="Booked">Booked</option>
+          <option value="Under Maintenance">Under Maintenance</option>
+        </select>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+        <button type="button" onclick="closeModal('addRoomModal')" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">+ Add Room</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Initialize Leaflet Map
+  const mapElement = document.getElementById('property-map');
+  if (mapElement) {
+    const lat = parseFloat(mapElement.dataset.lat) || 13.3392;
+    const lng = parseFloat(mapElement.dataset.lng) || 77.1017;
+    const title = mapElement.dataset.title || 'Property';
+    const city = mapElement.dataset.city || '';
+
+    const map = L.map('property-map').setView([lat, lng], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([lat, lng])
+      .addTo(map)
+      .bindPopup('<b>' + title + '</b><br>' + city)
+      .openPopup();
+  }
+
+  function selectRoomForEnquiry(roomId, roomName) {
+    document.getElementById('selected_room_id').value = roomId;
+    document.getElementById('room_name_badge').innerText = roomName;
+    document.getElementById('room_selection_note').style.display = 'block';
+    window.scrollTo({ top: document.querySelector('.site-header').offsetHeight, behavior: 'smooth' });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}Home Rental - Find Your Perfect Home{% endblock %}</title>
+  
+  <!-- Modern Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  {% if request.endpoint not in ['login', 'register', 'tenant_login', 'owner_login', 'admin_login', 'admin_register', 'tenant_register', 'owner_register'] %}
+  <!-- Navigation Bar -->
+  <header class="site-header">
+    <div class="nav-container">
+      <!-- Brand Logo -->
+      <a href="{% if current_user and current_user.role == 'customer' %}{{ url_for('customer_dashboard') }}{% elif current_user and current_user.role == 'admin' %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('home') }}{% endif %}" class="brand-logo">
+        <i class="fa-solid fa-house-chimney"></i>
+        <span>Home <span class="highlight">Rental</span></span>
+      </a>
+
+      <!-- User Authentication Controls -->
+      <div class="nav-auth">
+        {% if current_user %}
+          <a href="{% if current_user.role == 'admin' %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('customer_dashboard') }}{% endif %}" class="user-badge {% if current_user.role == 'admin' %}is-admin{% endif %}" title="View Dashboard">
+            <div class="user-avatar-wrap">
+              <span class="user-avatar-initial">{{ (current_user.name or 'U')[:1]|upper }}</span>
+              <span class="user-status-dot" title="Active"></span>
+            </div>
+            <span class="user-name">{{ (current_user.name or 'User').split(' ')[0]|capitalize }}</span>
+            <span class="role-tag {% if current_user.role == 'admin' %}role-tag-admin{% else %}role-tag-tenant{% endif %}">
+              {% if current_user.role == 'admin' %}
+                <i class="fa-solid fa-shield-halved"></i> ADMIN
+              {% else %}
+                <i class="fa-solid fa-house-user"></i> TENANT
+              {% endif %}
+            </span>
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm nav-logout-btn" title="Log Out">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+          </a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm">
+            <i class="fa-solid fa-user"></i> Tenant Log In
+          </a>
+          <a href="{{ url_for('admin_login') }}" class="btn btn-sm" style="background: #0f172a; color: #fff; font-weight: 600;">
+            <i class="fa-solid fa-shield-halved"></i> Admin Log In
+          </a>
+          <a href="{{ url_for('register') }}" class="btn btn-orange btn-sm">Sign Up</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+  {% endif %}
+
+  <!-- Flash Messages Banner -->
+  <div class="container" style="padding-top: 1rem; padding-bottom: 0;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <span><i class="fa-solid fa-circle-info"></i> {{ message }}</span>
+            <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:inherit;">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if not is_supabase_ready %}
+      <div class="alert alert-warning" style="border-left: 4px solid #f59e0b;">
+        <div>
+          <strong><i class="fa-solid fa-triangle-exclamation"></i> Supabase Setup Notice:</strong>
+          Supabase credentials are not yet configured in <code>.env</code>. Follow the instructions in <code>README.md</code> to connect your Supabase project.
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Main Content Block -->
+  {% set no_tenant_sidebar = ['login', 'register', 'tenant_login', 'tenant_register', 'owner_login', 'owner_register', 'admin_login', 'admin_register', 'admin_dashboard', 'add_property', 'edit_property'] %}
+  <div class="{% if current_user and current_user.role == 'customer' and request.endpoint not in no_tenant_sidebar %}dashboard-wrapper{% endif %}">
+    {% if current_user and current_user.role == 'customer' and request.endpoint not in no_tenant_sidebar %}
+    <!-- Tenant Sidebar: Always Visible Across All Tenant Pages -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="fa-solid fa-user-check"></i>
+        <span>Tenant Portal</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li class="{% if request.endpoint in ['customer_dashboard', 'home'] %}active{% endif %}">
+          <a href="{{ url_for('customer_dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+        </li>
+        <li class="{% if request.endpoint in ['properties_listing', 'property_details'] %}active{% endif %}">
+          <a href="{{ url_for('properties_listing') }}"><i class="fa-solid fa-magnifying-glass"></i> Browse Homes</a>
+        </li>
+        <li>
+          <a href="{{ url_for('customer_dashboard') }}#saved-favourites"><i class="fa-solid fa-heart"></i> Saved Homes</a>
+        </li>
+        <li>
+          <a href="{{ url_for('customer_dashboard') }}#my-enquiries"><i class="fa-solid fa-comments"></i> My Enquiries</a>
+        </li>
+        <li>
+          <a href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+        </li>
+      </ul>
+    </aside>
+    {% endif %}
+
+    <main class="{% if current_user and current_user.role == 'customer' and request.endpoint not in no_tenant_sidebar %}dashboard-content{% endif %}">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

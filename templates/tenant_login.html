@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Tenant Log In - Home Rental{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper" style="max-width: 460px; margin: 3.5rem auto;">
+  <div class="auth-card" style="border-top: 4px solid var(--brand-orange); box-shadow: var(--shadow-lg);">
+    <!-- Dedicated Tenant Header -->
+    <div class="auth-header">
+      <div style="width: 68px; height: 68px; margin: 0 auto 1rem; border-radius: 50%; background: var(--brand-orange-light); color: var(--brand-orange); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+        <i class="fa-solid fa-user-check"></i>
+      </div>
+      <h2 style="font-size: 1.85rem; font-weight: 800; color: var(--text-main);">Tenant Log In</h2>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.35rem;">
+        Search homes, save favourites, and send rental enquiries
+      </p>
+    </div>
+
+    <!-- Tenant Login Form -->
+    <form action="{{ url_for('tenant_login', next=request.args.get('next')) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="role_filter" value="tenant">
+
+      <div class="form-group">
+        <label class="form-label" for="email">Tenant Email Address</label>
+        <div style="position:relative;">
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            class="form-control" 
+            placeholder="tenant@example.com" 
+            value="{{ email or '' }}" 
+            required 
+            style="padding-left: 2.5rem;"
+          >
+          <i class="fa-regular fa-envelope" style="position:absolute; left:0.9rem; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div style="position:relative;">
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="form-control" 
+            placeholder="••••••••" 
+            required 
+            style="padding-left: 2.5rem;"
+          >
+          <i class="fa-solid fa-lock" style="position:absolute; left:0.9rem; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-orange btn-block btn-lg" style="margin-top: 1.5rem; font-weight: 700;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Tenant Log In
+      </button>
+    </form>
+
+    <!-- Tenant Registration Link -->
+    <div style="margin-top: 2rem; text-align: center; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+      <p style="font-size: 0.92rem; color: var(--text-muted);">
+        Don't have a Tenant account yet?
+      </p>
+      <a href="{{ url_for('tenant_register') }}" class="btn btn-outline btn-sm" style="margin-top:0.6rem; color:var(--brand-orange); border-color:var(--brand-orange); font-weight: 600;">
+        <i class="fa-solid fa-user-plus"></i> Register as a Tenant
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

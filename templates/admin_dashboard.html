@@ -1,0 +1,520 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Manage Users & Listings{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+  <!-- Admin Sidebar -->
+  <aside class="sidebar">
+    <ul class="sidebar-nav" id="adminSidebarNav">
+      <li class="active"><a href="#overview"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+      <li><a href="#manage-users"><i class="fa-solid fa-users"></i> Users</a></li>
+      <li><a href="#recent-listings"><i class="fa-solid fa-house"></i> Homes</a></li>
+      <li><a href="{{ url_for('add_property') }}"><i class="fa-solid fa-plus-circle"></i> Add Home</a></li>
+      <li><a href="#audit-logs"><i class="fa-solid fa-clock-rotate-left"></i> Logs</a></li>
+      <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Admin Main Content -->
+  <main class="dashboard-content">
+
+    <!-- =====================================================================
+         TAB 1: OVERVIEW / DASHBOARD
+         ===================================================================== -->
+    <div class="admin-tab-section" id="overview">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h1 style="font-size:1.75rem; font-weight:800; color:var(--text-main);">Admin Dashboard</h1>
+          <p style="color:var(--text-muted); font-size:0.92rem;">Platform overview, key metrics, and activity summary.</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+          <a href="{{ url_for('add_property') }}" class="btn btn-primary" style="display:inline-flex; align-items:center; gap:0.5rem; font-weight:600; box-shadow:0 4px 12px rgba(37,99,235,0.25);">
+            <i class="fa-solid fa-plus"></i> Add Home Listing
+          </a>
+          <a href="{{ url_for('home') }}" class="btn btn-outline-primary" style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.88rem;">
+            <i class="fa-solid fa-globe"></i> View Tenant Web
+          </a>
+        </div>
+      </div>
+
+      <!-- Stat Cards Row -->
+      <div class="stats-grid">
+        <div class="stat-card" style="cursor:pointer;" onclick="switchAdminTab('#manage-users')">
+          <div class="stat-icon stat-blue"><i class="fa-solid fa-user"></i></div>
+          <div>
+            <div class="stat-number">{{ stats.total_users }}</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+        </div>
+        <div class="stat-card" style="cursor:pointer;" onclick="switchAdminTab('#recent-listings')">
+          <div class="stat-icon stat-green"><i class="fa-solid fa-house"></i></div>
+          <div>
+            <div class="stat-number">{{ stats.total_properties }}</div>
+            <div class="stat-label">Total Homes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-orange"><i class="fa-solid fa-calendar-check"></i></div>
+          <div>
+            <div class="stat-number">{{ stats.total_enquiries }}</div>
+            <div class="stat-label">Total Bookings</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Panels in Overview -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem; margin-top:2rem;">
+        <!-- Quick Users Preview -->
+        <div class="dashboard-panel" style="margin:0;">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 class="panel-title" style="font-size:1.05rem;"><i class="fa-solid fa-users" style="color:var(--primary)"></i> Recent Users</h3>
+            <button onclick="switchAdminTab('#manage-users')" class="btn btn-outline-primary btn-sm">View All Users</button>
+          </div>
+          <div class="panel-body" style="padding:1rem;">
+            {% if users and users|length > 0 %}
+              <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.75rem;">
+                {% for u in users[:4] %}
+                  <li style="display:flex; justify-content:space-between; align-items:center; padding-bottom:0.75rem; border-bottom:1px solid var(--border-color);">
+                    <div>
+                      <strong>{{ u.name }}</strong>
+                      <div style="font-size:0.8rem; color:var(--text-muted);">{{ u.email }}</div>
+                    </div>
+                    <span class="status-pill {% if u.status == 'active' %}pill-available{% else %}pill-booked{% endif %}" style="font-size:0.75rem;">
+                      {{ (u.status or 'Active')|capitalize }}
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p style="color:var(--text-muted); font-size:0.9rem; margin:0; text-align:center; padding:1rem 0;">No users registered yet.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Quick Homes Preview -->
+        <div class="dashboard-panel" style="margin:0;">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 class="panel-title" style="font-size:1.05rem;"><i class="fa-solid fa-house" style="color:var(--primary)"></i> Latest Homes</h3>
+            <button onclick="switchAdminTab('#recent-listings')" class="btn btn-outline-primary btn-sm">View All Homes</button>
+          </div>
+          <div class="panel-body" style="padding:1rem;">
+            {% if recent_listings and recent_listings|length > 0 %}
+              <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.75rem;">
+                {% for p in recent_listings[:3] %}
+                  <li style="display:flex; justify-content:space-between; align-items:center; padding-bottom:0.75rem; border-bottom:1px solid var(--border-color);">
+                    <div>
+                      <strong>{{ p.title }}</strong>
+                      <div style="font-size:0.8rem; color:var(--text-muted);">{{ p.property_type }} • {{ p.city }}</div>
+                    </div>
+                    <span class="status-pill {% if p.approval_status == 'approved' %}pill-available{% elif p.approval_status == 'pending' %}pill-pending{% else %}pill-booked{% endif %}" style="font-size:0.75rem;">
+                      {{ (p.approval_status or 'approved')|capitalize }}
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p style="color:var(--text-muted); font-size:0.9rem; margin:0; text-align:center; padding:1rem 0;">No listings available yet.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- =====================================================================
+         TAB 2: USERS ONLY
+         ===================================================================== -->
+    <div class="admin-tab-section" id="manage-users" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h1 style="font-size:1.75rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-users" style="color:var(--primary)"></i> User Management</h1>
+          <p style="color:var(--text-muted); font-size:0.92rem;">View registered tenants, owners, and administrators; activate or suspend accounts.</p>
+        </div>
+        <span style="font-size:0.9rem; font-weight:700; color:var(--text-main); background:white; padding:0.4rem 0.85rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+          Total Users: {{ users|length }}
+        </span>
+      </div>
+
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-list-check"></i> Registered Platform Users</h2>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          {% if users and users|length > 0 %}
+            <div style="overflow-x:auto;">
+              <table class="custom-table" style="margin:0;">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for u in users %}
+                    <tr>
+                      <td><strong>{{ u.name }}</strong></td>
+                      <td>{{ u.email }}</td>
+                      <td>
+                        <span style="text-transform: capitalize; font-weight:600; font-size:0.85rem; color:var(--text-sub);">
+                          {{ u.role }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="status-pill {% if u.status == 'active' %}pill-available{% else %}pill-booked{% endif %}">
+                          {{ u.status or 'Active' }}
+                        </span>
+                      </td>
+                      <td style="white-space:nowrap;">
+                        <button type="button" 
+                                class="btn btn-outline btn-sm" 
+                                style="color:var(--brand-orange); border-color:#fed7aa; margin-right:0.35rem; display:inline-flex; align-items:center; gap:0.3rem;"
+                                data-id="{{ u.id }}"
+                                data-name="{{ u.name }}"
+                                data-email="{{ u.email }}"
+                                data-phone="{{ u.phone or '' }}"
+                                data-role="{{ u.role }}"
+                                onclick="openEditUserModal(this)">
+                          <i class="fa-solid fa-pen-to-square"></i> Edit
+                        </button>
+                        <form action="{{ url_for('admin_delete_user', user_id=u.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to permanently delete user {{ u.name }}?');">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                          <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:#fecaca; display:inline-flex; align-items:center; gap:0.3rem;">
+                            <i class="fa-solid fa-trash-can"></i> Delete
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div style="padding:3rem 1.5rem; text-align:center; color:var(--text-muted);">
+              <i class="fa-solid fa-users" style="font-size:2.5rem; color:#cbd5e1; margin-bottom:0.75rem;"></i>
+              <p style="font-size:1rem; margin:0;">No registered users found yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+
+    <!-- =====================================================================
+         TAB 3: HOMES ONLY (WHEN HOME ICON IS CLICKED - SHOWS ONLY HOMES)
+         ===================================================================== -->
+    <div class="admin-tab-section" id="recent-listings" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h1 style="font-size:1.75rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-house" style="color:var(--brand-orange)"></i> Homes &amp; Listings</h1>
+          <p style="color:var(--text-muted); font-size:0.92rem;">All registered property listings on the platform.</p>
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+          <a href="{{ url_for('add_property') }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add Home Listing</a>
+          <a href="{{ url_for('properties_listing') }}" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-globe"></i> View on Tenant Web</a>
+        </div>
+      </div>
+
+      <div class="dashboard-panel">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <h2 class="panel-title"><i class="fa-solid fa-building"></i> All Homes ({{ recent_listings|length }})</h2>
+        </div>
+        <div class="panel-body">
+          <div class="properties-grid">
+            {% if recent_listings and recent_listings|length > 0 %}
+              {% for prop in recent_listings %}
+                <div class="property-card">
+                  <div class="card-img-wrapper">
+                    {% if prop.property_images and prop.property_images|length > 0 %}
+                      <img src="{{ prop.property_images[0].image_url }}" alt="{{ prop.title }}" loading="lazy">
+                    {% else %}
+                      <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80" alt="{{ prop.title }}" loading="lazy">
+                    {% endif %}
+                    <span class="property-badge-type">{{ prop.property_type }}</span>
+                  </div>
+                  <div class="card-body">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                      <span class="status-pill {% if prop.approval_status == 'approved' %}pill-available{% elif prop.approval_status == 'pending' %}pill-pending{% else %}pill-booked{% endif %}" style="font-size:0.75rem;">
+                        {{ (prop.approval_status or 'approved')|capitalize }}
+                      </span>
+                      <span style="font-size:0.75rem; color:var(--text-sub);"><i class="fa-solid fa-location-dot"></i> {{ prop.city }}</span>
+                    </div>
+                    <h3 class="card-title">{{ prop.title }}</h3>
+                    <div class="card-meta" style="margin-bottom:0.75rem;">
+                      <div class="meta-item"><i class="fa-solid fa-bed"></i> <span>{{ prop.bedrooms }} BHK</span></div>
+                      <div class="meta-item"><i class="fa-solid fa-bath"></i> <span>{{ prop.bathrooms }} Bath</span></div>
+                      <div class="meta-item"><i class="fa-solid fa-ruler-combined"></i> <span>{{ prop.area_sqft }} sqft</span></div>
+                    </div>
+                    <div class="card-footer">
+                      <div class="card-price">₹{{ "{:,.0f}".format(prop.monthly_rent) }} <span>/ mo</span></div>
+                      <div style="display:flex; gap:0.35rem;">
+                        <a href="{{ url_for('property_details', property_id=prop.id) }}" class="btn btn-outline-primary btn-sm" title="View Details">View</a>
+                        <a href="{{ url_for('edit_property', property_id=prop.id) }}" class="btn btn-outline btn-sm" title="Edit Home">Edit</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div style="grid-column: 1 / -1; padding:3rem 1.5rem; text-align:center; color:var(--text-muted); background:white; border:1px dashed var(--border-color); border-radius:var(--radius-md);">
+                <i class="fa-solid fa-house-chimney" style="font-size:2.5rem; color:#cbd5e1; margin-bottom:0.75rem;"></i>
+                <p style="font-size:1rem; margin-bottom:1rem;">No homes added yet.</p>
+                <a href="{{ url_for('add_property') }}" class="btn btn-primary btn-sm">
+                  <i class="fa-solid fa-plus"></i> Add First Home Listing
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- =====================================================================
+         TAB 5: LOGS ONLY
+         ===================================================================== -->
+    <div class="admin-tab-section" id="audit-logs" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h1 style="font-size:1.75rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-clock-rotate-left" style="color:var(--text-sub)"></i> System Audit Logs</h1>
+          <p style="color:var(--text-muted); font-size:0.92rem;">Audit record of all administrative actions, property listings, and user updates.</p>
+        </div>
+        <span style="font-size:0.9rem; font-weight:700; color:var(--text-main); background:white; padding:0.4rem 0.85rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+          Recent Logs: {{ admin_logs|length }}
+        </span>
+      </div>
+
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-clipboard-list"></i> Activity History</h2>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          {% if admin_logs and admin_logs|length > 0 %}
+            <div style="overflow-x:auto;">
+              <table class="custom-table" style="margin:0;">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for log in admin_logs %}
+                    <tr>
+                      <td style="white-space:nowrap; font-size:0.85rem; color:var(--text-muted);">
+                        {{ log.created_at[:19] if log.created_at else '' }}
+                      </td>
+                      <td>
+                        <span class="status-pill pill-available" style="font-size:0.78rem;">
+                          {{ log.action }}
+                        </span>
+                      </td>
+                      <td style="font-size:0.9rem; color:var(--text-main);">
+                        {{ log.details }}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div style="padding:3rem 1.5rem; text-align:center; color:var(--text-muted);">
+              <i class="fa-solid fa-clock-rotate-left" style="font-size:2.5rem; color:#cbd5e1; margin-bottom:0.75rem;"></i>
+              <p style="font-size:1rem; margin:0;">No audit logs recorded yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: Reject Property Reason -->
+<div id="rejectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; align-items:center; justify-content:center; padding:1rem;">
+  <div style="background:white; border-radius:var(--radius-lg); width:100%; max-width:480px; padding:2rem; box-shadow:var(--shadow-hover);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <h3 style="font-size:1.25rem; font-weight:700; color:var(--danger);">Reject Property Listing</h3>
+      <button onclick="closeModal('rejectModal')" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+    </div>
+
+    <form id="rejectForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <p style="font-size:0.92rem; color:var(--text-sub); margin-bottom:1rem;">
+        Provide a clear rejection reason for <strong id="rejectPropTitle"></strong>:
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Reason for Rejection</label>
+        <textarea name="rejection_reason" class="form-control" rows="3" placeholder="e.g. Inaccurate location, low image quality, or missing verified contact details." required></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+        <button type="button" onclick="closeModal('rejectModal')" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-danger btn-sm">Confirm Rejection</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function openRejectModal(propId, title) {
+    document.getElementById('rejectForm').action = '/admin/property/' + propId + '/reject';
+    document.getElementById('rejectPropTitle').innerText = title;
+    openModal('rejectModal');
+  }
+
+  // Pure tab switching function: switches views so clicking an icon shows ONLY that section!
+  function switchAdminTab(targetHash) {
+    if (!targetHash || targetHash === '#') targetHash = '#overview';
+    if (!targetHash.startsWith('#')) targetHash = '#' + targetHash;
+
+    // Support common aliases
+    if (targetHash === '#homes') targetHash = '#recent-listings';
+    if (targetHash === '#users') targetHash = '#manage-users';
+    if (targetHash === '#logs') targetHash = '#audit-logs';
+    if (targetHash === '#dashboard') targetHash = '#overview';
+
+    const sections = document.querySelectorAll('.admin-tab-section');
+    let matched = false;
+
+    sections.forEach(sec => {
+      if ('#' + sec.id === targetHash) {
+        sec.style.display = 'block';
+        matched = true;
+      } else {
+        sec.style.display = 'none';
+      }
+    });
+
+    if (!matched && sections.length > 0) {
+      sections[0].style.display = 'block';
+      targetHash = '#' + sections[0].id;
+    }
+
+    // Update active state in sidebar
+    document.querySelectorAll('#adminSidebarNav li').forEach(li => {
+      const a = li.querySelector('a');
+      if (a && a.getAttribute('href') === targetHash) {
+        li.classList.add('active');
+      } else if (a && a.getAttribute('href')?.startsWith('#')) {
+        li.classList.remove('active');
+      }
+    });
+
+    history.pushState(null, null, targetHash);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Handle sidebar navigation clicks
+  document.querySelectorAll('#adminSidebarNav li a').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchAdminTab(this.getAttribute('href'));
+      });
+    }
+  });
+
+  // Handle URL hash changes or deep links on load (e.g. /admin/dashboard#recent-listings)
+  window.addEventListener('hashchange', function() {
+    if (window.location.hash) {
+      switchAdminTab(window.location.hash);
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const initial = window.location.hash || '#overview';
+    switchAdminTab(initial);
+  });
+
+  // Edit User Modal Functions
+  function openEditUserModal(btn) {
+    const id = btn.getAttribute('data-id');
+    const name = btn.getAttribute('data-name');
+    const email = btn.getAttribute('data-email');
+    const phone = btn.getAttribute('data-phone');
+    const role = btn.getAttribute('data-role');
+
+    document.getElementById('editUserForm').action = '/admin/users/' + id + '/edit';
+    document.getElementById('editUserName').value = name || '';
+    document.getElementById('editUserEmail').value = email || '';
+    document.getElementById('editUserPhone').value = phone || '';
+    document.getElementById('editUserRole').value = role || 'customer';
+
+    const modal = document.getElementById('editUserModal');
+    modal.style.display = 'flex';
+  }
+
+  function closeEditUserModal() {
+    const modal = document.getElementById('editUserModal');
+    modal.style.display = 'none';
+  }
+
+  document.getElementById('editUserModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeEditUserModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeEditUserModal();
+    }
+  });
+</script>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:1rem;">
+  <div style="background:white; border-radius:var(--radius-lg); width:100%; max-width:480px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); overflow:hidden;">
+    <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+        <i class="fa-solid fa-user-pen" style="color:var(--brand-orange)"></i> Edit User Profile
+      </h3>
+      <button type="button" onclick="closeEditUserModal()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted); line-height:1;">&times;</button>
+    </div>
+    
+    <form id="editUserForm" method="POST" action="" style="padding:1.5rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label class="form-label" for="editUserName">Full Name *</label>
+        <input type="text" id="editUserName" name="name" class="form-control" required>
+      </div>
+
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label class="form-label" for="editUserEmail">Email Address *</label>
+        <input type="email" id="editUserEmail" name="email" class="form-control" required>
+      </div>
+
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label class="form-label" for="editUserPhone">Phone Number</label>
+        <input type="text" id="editUserPhone" name="phone" class="form-control" placeholder="e.g. 9876543210">
+      </div>
+
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label class="form-label" for="editUserRole">Role *</label>
+        <select id="editUserRole" name="role" class="form-control" required>
+          <option value="customer">Tenant (Customer)</option>
+          <option value="owner">Homeowner</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+        <button type="button" onclick="closeEditUserModal()" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-orange btn-sm">
+          <i class="fa-solid fa-check"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

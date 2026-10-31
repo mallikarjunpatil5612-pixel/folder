@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Home Rental - Find Your Perfect Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section (Customer View - Home Page) -->
+<section class="hero-section">
+  <div class="hero-content">
+    <h1 class="hero-title">Find Your Perfect Home</h1>
+    <p class="hero-subtitle">Discover the best homes for rent with ease. Safe, simple and trusted.</p>
+
+    <!-- Location & Filter Search Box -->
+    <form action="{{ url_for('properties_listing') }}" method="GET" class="hero-search-box">
+      <!-- Location Input -->
+      <div class="search-field">
+        <label><i class="fa-solid fa-location-dot" style="color:var(--brand-orange)"></i> Location</label>
+        <input type="text" name="city" placeholder="Enter City (e.g. Tumakuru, Bengaluru)">
+      </div>
+
+      <!-- Property Type Select -->
+      <div class="search-field">
+        <label><i class="fa-solid fa-house" style="color:var(--primary)"></i> Property Type</label>
+        <select name="property_type">
+          <option value="">All Types</option>
+          {% for ptype in property_types %}
+            <option value="{{ ptype }}">{{ ptype }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Budget Filter -->
+      <div class="search-field">
+        <label><i class="fa-solid fa-indian-rupee-sign" style="color:var(--success)"></i> Budget</label>
+        <select name="max_rent">
+          <option value="">Select Budget</option>
+          <option value="15000">Under ₹15,000</option>
+          <option value="25000">Under ₹25,000</option>
+          <option value="50000">Under ₹50,000</option>
+          <option value="100000">Under ₹1,00,000</option>
+          <option value="200000">Above ₹1,00,000</option>
+        </select>
+      </div>
+
+      <!-- Search Button -->
+      <button type="submit" class="btn btn-orange" style="padding: 0.85rem 1.85rem; border-radius: var(--radius-md);">
+        <i class="fa-solid fa-magnifying-glass"></i> Search
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- Project Flow Banner -->
+<div class="container" style="padding-top: 2rem; padding-bottom: 0;">
+  <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+    <div style="display:flex; align-items:center; gap: 0.85rem;">
+      <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">
+        <i class="fa-solid fa-circle-nodes"></i>
+      </div>
+      <div>
+        <h4 style="font-size: 1.05rem; font-weight:700; color:var(--text-main);">How Home Rental Works</h4>
+        <p style="font-size: 0.88rem; color:var(--text-muted);">Homeowners list homes and rooms, and tenants browse & rent seamlessly.</p>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+      <a href="{{ url_for('properties_listing') }}" class="btn btn-orange btn-sm">
+        <i class="fa-solid fa-house-chimney"></i> Browse & Rent Homes
+      </a>
+      <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm">
+        <i class="fa-solid fa-house-user"></i> Tenant Log In
+      </a>
+      <a href="{{ url_for('admin_login') }}" class="btn btn-sm" style="background: #0f172a; color: #ffffff; font-weight: 600; padding: 0.45rem 0.9rem; border-radius: var(--radius-md);">
+        <i class="fa-solid fa-shield-halved"></i> Admin Log In
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Featured Homes Section -->
+<section class="container">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">Featured Homes</h2>
+      <p class="section-subtitle">Hand-picked, verified houses and rooms ready for immediate move-in.</p>
+    </div>
+    <a href="{{ url_for('properties_listing') }}" class="btn btn-outline-primary btn-sm">
+      View All <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+
+  <div class="properties-grid">
+    {% if properties and properties|length > 0 %}
+      {% for prop in properties %}
+        <div class="property-card">
+          <!-- Property Image -->
+          <div class="card-img-wrapper">
+            {% if prop.property_images and prop.property_images|length > 0 %}
+              <img src="{{ prop.property_images[0].image_url }}" alt="{{ prop.title }}" loading="lazy">
+            {% else %}
+              <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80" alt="{{ prop.title }}" loading="lazy">
+            {% endif %}
+
+            <span class="property-badge-type">{{ prop.property_type }}</span>
+
+            {% if current_user and current_user.role == 'customer' %}
+              <button class="fav-btn" data-property-id="{{ prop.id }}" title="Save to Favourites">
+                <i class="fa-regular fa-heart"></i>
+              </button>
+            {% endif %}
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            <h3 class="card-title">{{ prop.title }}</h3>
+            <div class="card-location">
+              <i class="fa-solid fa-location-dot" style="color:var(--brand-orange)"></i>
+              <span>{{ prop.locality or prop.city }}, {{ prop.city }}</span>
+            </div>
+
+            <div class="card-meta">
+              <div class="meta-item">
+                <i class="fa-solid fa-bed"></i>
+                <span>{{ prop.bedrooms }} BHK</span>
+              </div>
+              <div class="meta-item">
+                <i class="fa-solid fa-bath"></i>
+                <span>{{ prop.bathrooms }} Bath</span>
+              </div>
+              <div class="meta-item">
+                <i class="fa-solid fa-ruler-combined"></i>
+                <span>{{ prop.area_sqft }} sqft</span>
+              </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="card-footer">
+              <div class="card-price">
+                ₹{{ "{:,.0f}".format(prop.monthly_rent) }} <span>/ month</span>
+              </div>
+              <a href="{{ url_for('property_details', property_id=prop.id) }}" class="btn btn-primary btn-sm">
+                View Details
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div style="grid-column: 1 / -1; background:white; border:1px dashed var(--border-color); border-radius:var(--radius-lg); padding:3.5rem 1.5rem; text-align:center;">
+        <i class="fa-solid fa-house" style="font-size:3rem; color:#cbd5e1; margin-bottom:1rem;"></i>
+        <h3 style="font-size:1.35rem; color:var(--text-main); margin-bottom:0.5rem;">No Homes Listed Yet</h3>
+        <p style="color:var(--text-muted); max-width:480px; margin:0 auto 1.5rem;">
+          Verified rental homes published by the administrator will appear here. Check back soon!
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

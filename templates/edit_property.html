@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Home - {{ property.title }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <i class="fa-solid fa-house-user"></i>
+      <span>Owner Portal</span>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="{{ url_for('owner_dashboard') }}"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+      <li><a href="{{ url_for('add_property') }}"><i class="fa-solid fa-plus-circle"></i> Add Home</a></li>
+      <li><a href="{{ url_for('owner_dashboard') }}#my-homes"><i class="fa-solid fa-house"></i> My Homes</a></li>
+      <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <main class="dashboard-content">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-pen-to-square" style="color:var(--primary)"></i> Edit Home Details</h2>
+          <a href="{{ url_for('property_details', property_id=property.id) }}" class="btn btn-outline btn-sm">View Live</a>
+        </div>
+
+        <div class="panel-body">
+          <form action="{{ url_for('edit_property', property_id=property.id) }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-group">
+              <label class="form-label" for="title">Home Title *</label>
+              <input type="text" id="title" name="title" class="form-control" value="{{ property.title }}" required>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="property_type">Property Type *</label>
+                <select id="property_type" name="property_type" class="form-control" required>
+                  {% for ptype in property_types %}
+                    <option value="{{ ptype }}" {% if property.property_type == ptype %}selected{% endif %}>{{ ptype }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="monthly_rent">Monthly Rent (₹) *</label>
+                <input type="number" id="monthly_rent" name="monthly_rent" class="form-control" value="{{ property.monthly_rent }}" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="security_deposit">Security Deposit (₹)</label>
+                <input type="number" id="security_deposit" name="security_deposit" class="form-control" value="{{ property.security_deposit }}">
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label" for="address">Full Address *</label>
+                <input type="text" id="address" name="address" class="form-control" value="{{ property.address }}" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="city">City *</label>
+                <input type="text" id="city" name="city" class="form-control" value="{{ property.city }}" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="locality">Locality</label>
+                <input type="text" id="locality" name="locality" class="form-control" value="{{ property.locality or '' }}">
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="bedrooms">Bedrooms</label>
+                <input type="number" id="bedrooms" name="bedrooms" class="form-control" value="{{ property.bedrooms }}" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="bathrooms">Bathrooms</label>
+                <input type="number" id="bathrooms" name="bathrooms" class="form-control" value="{{ property.bathrooms }}" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="balconies">Balconies</label>
+                <input type="number" id="balconies" name="balconies" class="form-control" value="{{ property.balconies or '0' }}">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="area_sqft">Square Footage (sqft)</label>
+                <input type="number" id="area_sqft" name="area_sqft" class="form-control" value="{{ property.area_sqft }}" required>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="water_available">Water Availability</label>
+                <select id="water_available" name="water_available" class="form-control">
+                  {% for w in water_options %}
+                    <option value="{{ w }}" {% if property.water_available == w %}selected{% endif %}>{{ w }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="contact_phone">Contact Phone</label>
+                <input type="tel" id="contact_phone" name="contact_phone" class="form-control" value="{{ property.contact_phone or '' }}">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-item">
+                <input type="checkbox" name="parking_available" {% if property.parking_available %}checked{% endif %}>
+                <span>Parking Available</span>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="description">Home Description</label>
+              <textarea id="description" name="description" class="form-control" rows="4">{{ property.description or '' }}</textarea>
+            </div>
+
+            <!-- Existing Photos Gallery with Delete Buttons -->
+            <div class="form-group">
+              <label class="form-label">Current Photos</label>
+              <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;">
+                {% if property.property_images and property.property_images|length > 0 %}
+                  {% for img in property.property_images %}
+                    <div style="position:relative; width:100px; height:80px; border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--border-color);">
+                      <img src="{{ img.image_url }}" style="width:100%; height:100%; object-fit:cover;">
+                      <button type="submit" form="delete-img-{{ img.id }}" style="position:absolute; top:4px; right:4px; background:rgba(220,38,38,0.9); color:white; border:none; width:22px; height:22px; border-radius:50%; cursor:pointer; font-size:0.75rem; display:flex; align-items:center; justify-content:center;" onclick="return confirm('Remove photo?');" title="Delete Photo">
+                        <i class="fa-solid fa-times"></i>
+                      </button>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <p style="color:var(--text-muted); font-size:0.85rem;">No photos currently uploaded.</p>
+                {% endif %}
+              </div>
+
+              <!-- Upload Additional Photos -->
+              <label class="form-label" for="photo-input">Add More Photos</label>
+              <input type="file" id="photo-input" name="photos" class="form-control" multiple accept="image/*">
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem;">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-save"></i> Save Changes
+              </button>
+            </div>
+          </form>
+
+          <!-- Separate Hidden Forms for Photo Deletions (preventing invalid nested HTML forms) -->
+          {% if property.property_images %}
+            {% for img in property.property_images %}
+              <form id="delete-img-{{ img.id }}" action="{{ url_for('delete_image', property_id=property.id, image_id=img.id) }}" method="POST" style="display:none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              </form>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
