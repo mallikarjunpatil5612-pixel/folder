@@ -357,7 +357,7 @@
               type="email"
               id="email"
               name="email"
-              placeholder="admin@homerental.com"
+              placeholder="{{ config.ADMIN_EMAIL }}"
               value="{{ email or '' }}"
               required
               autocomplete="email"
@@ -390,13 +390,6 @@
       </form>
     </div>
 
-    <!-- Footer Links -->
-    <div class="admin-footer-links">
-      <p style="font-size:0.82rem; color:#94a3b8; margin:0 0 0.65rem; font-weight:500;">Need an admin account?</p>
-      <a href="{{ url_for('admin_register') }}" class="admin-register-link">
-        <i class="fa-solid fa-user-plus" style="font-size:0.8rem;"></i> Register as Admin
-      </a>
-    </div>
   </div>
 
 </div>

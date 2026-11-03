@@ -132,20 +132,20 @@ def test_tenant_registration_validation(client):
     assert b"Please enter a valid email address" in res.data
 
 
-def test_admin_registration_validation(client):
-    """Test administrator registration validation."""
+def test_admin_registration_is_disabled(client):
+    """Verify public administrator registration always redirects to login."""
     with client.session_transaction() as sess:
         sess["csrf_token"] = "test-csrf-token"
 
-    # Short name
     res = client.post("/admin/register", data={
         "csrf_token": "test-csrf-token",
         "name": "A",
         "email": "admin-audit@example.com",
         "password": "Password123",
         "confirm_password": "Password123"
-    }, follow_redirects=True)
-    assert b"Admin Full Name must be at least 2 characters" in res.data
+    })
+    assert res.status_code == 302
+    assert res.headers["Location"].endswith("/admin/login")
 
 
 # ============================================================================
@@ -227,6 +227,7 @@ def test_admin_rbac_access(client):
         sess["user_id"] = "test-admin-uuid"
         sess["user_name"] = "Admin Tester"
         sess["user_role"] = Config.ROLE_ADMIN
+        sess["user_email"] = Config.ADMIN_EMAIL
 
     # Admin dashboard is allowed
     assert client.get("/admin/dashboard").status_code == 200
@@ -275,3 +276,4 @@ def test_logout_clears_session(client):
     res_dash = client.get("/tenant/dashboard")
     assert res_dash.status_code == 302
     assert "/login" in res_dash.headers["Location"]
+

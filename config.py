@@ -30,6 +30,7 @@ class Config:
     ROLE_RENTAL = "rental"
     ROLE_ADMIN = "admin"
     ALLOWED_REGISTRATION_ROLES = [ROLE_CUSTOMER, ROLE_OWNER]
+    ADMIN_EMAIL = "mallikarjunpatil5612@gmail.com"
 
     # Property Constants
     PROPERTY_TYPES = [

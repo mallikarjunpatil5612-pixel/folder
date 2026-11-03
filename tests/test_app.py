@@ -133,19 +133,50 @@ def test_admin_logout_redirects_to_admin_login(client):
         assert "user_id" not in sess
 
 
-def test_admin_register_page(client):
-    """Verify admin registration page loads cleanly with 200 OK."""
+def test_admin_registration_redirects_to_login(client):
+    """Verify public administrator registration is disabled."""
     response = client.get("/admin/register")
-    assert response.status_code == 200
-    assert b"Admin Registration" in response.data
-    assert b"Register Administrator" in response.data
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/login")
 
 
-def test_admin_login_has_register_link(client):
-    """Verify admin login page includes link to register."""
+def test_admin_login_has_no_register_link(client):
+    """Verify admin login page does not offer public registration."""
     response = client.get("/admin/login")
     assert response.status_code == 200
-    assert b"Register as Admin" in response.data
+    assert b"Register as Admin" not in response.data
+    assert Config.ADMIN_EMAIL.encode() in response.data
+
+
+def test_admin_login_rejects_non_allowlisted_email(client, monkeypatch):
+    """Reject other email addresses before querying the user database."""
+    def unexpected_user_lookup(_email):
+        pytest.fail("Non-allowlisted admin email reached the database")
+
+    monkeypatch.setattr("app.db.get_user_by_email", unexpected_user_lookup)
+    with client.session_transaction() as sess:
+        sess["csrf_token"] = "test-csrf-token"
+
+    response = client.post("/admin/login", data={
+        "csrf_token": "test-csrf-token",
+        "email": "other@example.com",
+        "password": "anything",
+    })
+
+    assert response.status_code == 200
+    assert b"Invalid administrator credentials" in response.data
+
+
+def test_non_allowlisted_admin_session_is_denied(client):
+    """Reject admin-role sessions that do not use the authorized admin email."""
+    with client.session_transaction() as sess:
+        sess["user_id"] = "unauthorized-admin-id"
+        sess["user_name"] = "Unauthorized Admin"
+        sess["user_role"] = Config.ROLE_ADMIN
+        sess["user_email"] = "other@example.com"
+
+    response = client.get("/admin/dashboard")
+    assert response.status_code == 403
 
 
 def test_admin_can_access_add_property_page(client):
@@ -154,6 +185,7 @@ def test_admin_can_access_add_property_page(client):
         sess["user_id"] = "admin-test-id"
         sess["user_name"] = "Admin User"
         sess["user_role"] = "admin"
+        sess["user_email"] = Config.ADMIN_EMAIL
 
     response = client.get("/properties/add")
     assert response.status_code == 200
@@ -167,6 +199,7 @@ def test_admin_dashboard_has_add_home_button(client):
         sess["user_id"] = "admin-test-id"
         sess["user_name"] = "Admin User"
         sess["user_role"] = "admin"
+        sess["user_email"] = Config.ADMIN_EMAIL
 
     response = client.get("/admin/dashboard")
     assert response.status_code == 200

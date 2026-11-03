@@ -93,6 +93,8 @@ def role_required(allowed_roles):
             user_role = session.get("user_role")
             if user_role not in allowed_roles:
                 return render_template("403.html", message=f"Access denied. Required role: {', '.join(allowed_roles)}."), 403
+            if user_role == Config.ROLE_ADMIN and session.get("user_email", "").strip().lower() != Config.ADMIN_EMAIL:
+                return render_template("403.html", message="Access denied. This admin account is not authorized."), 403
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -438,6 +440,10 @@ def admin_login():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
 
+        if email != Config.ADMIN_EMAIL:
+            flash("Access denied. Invalid administrator credentials.", "danger")
+            return render_template("admin_login.html", email=email)
+
         user = db.get_user_by_email(email)
         if not user or user.get("role") != Config.ROLE_ADMIN or not check_password_hash(user["password_hash"], password):
             flash("Access denied. Invalid administrator credentials.", "danger")
@@ -457,80 +463,8 @@ def admin_login():
 
 @app.route("/admin/register", methods=["GET", "POST"])
 def admin_register():
-    """Administrator Registration Route."""
-    if "user_id" in session:
-        if session.get("user_role") == Config.ROLE_ADMIN:
-            return redirect(url_for("admin_dashboard"))
-        csrf = session.get("csrf_token")
-        session.clear()
-        if csrf:
-            session["csrf_token"] = csrf
-
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        phone = request.form.get("phone", "").strip()
-        password = request.form.get("password", "")
-        confirm_password = request.form.get("confirm_password", "")
-
-        errors = []
-        if not name or len(name) < 2:
-            errors.append("Admin Full Name must be at least 2 characters.")
-
-        if not email or not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
-            errors.append("Please enter a valid email address.")
-
-        if len(password) < 6:
-            errors.append("Password must be at least 6 characters.")
-
-        if password != confirm_password:
-            errors.append("Passwords do not match.")
-
-        if errors:
-            for err in errors:
-                flash(err, "danger")
-            return render_template("admin_register.html", name=name, email=email, phone=phone)
-
-        try:
-            existing = db.get_user_by_email(email)
-            if existing:
-                if existing.get("role") == Config.ROLE_ADMIN:
-                    flash("An administrator account with this email address already exists. Please sign in.", "info")
-                    return redirect(url_for("admin_login"))
-                else:
-                    # User was previously a tenant/customer or owner; upgrade them to Administrator
-                    password_hash = generate_password_hash(password)
-                    db.update_user(existing["id"], {
-                        "name": name,
-                        "phone": phone or existing.get("phone"),
-                        "password_hash": password_hash,
-                        "role": Config.ROLE_ADMIN
-                    })
-                    session["user_id"] = existing["id"]
-                    session["user_name"] = name
-                    session["user_email"] = existing["email"]
-                    session["user_role"] = Config.ROLE_ADMIN
-
-                    db.log_admin_action(existing["id"], "ADMIN_REGISTER", f"Account {email} upgraded to Administrator.")
-                    flash(f"Welcome Administrator, {name}! Your account has been upgraded to Administrator.", "success")
-                    return redirect(url_for("admin_dashboard"))
-
-            password_hash = generate_password_hash(password)
-            new_user = db.create_user(name, email, phone, password_hash, Config.ROLE_ADMIN)
-
-            session["user_id"] = new_user["id"]
-            session["user_name"] = new_user["name"]
-            session["user_email"] = new_user["email"]
-            session["user_role"] = Config.ROLE_ADMIN
-
-            db.log_admin_action(new_user["id"], "ADMIN_REGISTER", f"New Administrator {new_user['email']} registered.")
-            flash(f"Welcome Administrator, {new_user['name']}! Your admin account was created successfully.", "success")
-            return redirect(url_for("admin_dashboard"))
-        except Exception as e:
-            flash(f"Admin Registration error: {str(e)}", "danger")
-            return render_template("admin_register.html", name=name, email=email, phone=phone)
-
-    return render_template("admin_register.html")
+    """Disable public administrator registration."""
+    return redirect(url_for("admin_login"))
 
 
 @app.route("/admin/logout")
