@@ -1,6 +1,7 @@
 import pytest
 from app import app
 from config import Config
+from werkzeug.security import generate_password_hash
 
 
 @pytest.fixture
@@ -165,6 +166,90 @@ def test_admin_login_rejects_non_allowlisted_email(client, monkeypatch):
 
     assert response.status_code == 200
     assert b"Invalid administrator credentials" in response.data
+
+
+def post_admin_login(client, email, password):
+    client.get("/admin/login")
+    with client.session_transaction() as sess:
+        csrf_token = sess["csrf_token"]
+
+    return client.post("/admin/login", data={
+        "csrf_token": csrf_token,
+        "email": email,
+        "password": password,
+    })
+
+
+def test_admin_login_success_redirects_to_dashboard(client, monkeypatch):
+    """A valid allowlisted admin account signs in and reaches its dashboard."""
+    test_password = "UnitTest-Only-Password-42!"
+    admin_user = {
+        "id": "test-admin-id",
+        "name": "Test Admin",
+        "email": Config.ADMIN_EMAIL,
+        "role": Config.ROLE_ADMIN,
+        "password_hash": generate_password_hash(test_password),
+    }
+    monkeypatch.setattr("app.db.get_user_by_email", lambda _email: admin_user)
+    monkeypatch.setattr("app.db.log_admin_action", lambda *_args: None)
+
+    response = post_admin_login(client, Config.ADMIN_EMAIL, test_password)
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/dashboard")
+    with client.session_transaction() as sess:
+        assert sess["user_role"] == Config.ROLE_ADMIN
+        assert sess["user_email"] == Config.ADMIN_EMAIL
+
+
+def test_admin_login_rejects_incorrect_password(client, monkeypatch):
+    """A valid admin email with a wrong password is rejected."""
+    admin_user = {
+        "id": "test-admin-id",
+        "name": "Test Admin",
+        "email": Config.ADMIN_EMAIL,
+        "role": Config.ROLE_ADMIN,
+        "password_hash": generate_password_hash("Correct-Test-Password-42!"),
+    }
+    monkeypatch.setattr("app.db.get_user_by_email", lambda _email: admin_user)
+
+    response = post_admin_login(client, Config.ADMIN_EMAIL, "incorrect-test-password")
+
+    assert response.status_code == 200
+    assert b"Invalid administrator credentials" in response.data
+    with client.session_transaction() as sess:
+        assert "user_id" not in sess
+
+
+def test_admin_login_rejects_missing_account(client, monkeypatch):
+    """An absent admin account is rejected without creating a session."""
+    monkeypatch.setattr("app.db.get_user_by_email", lambda _email: None)
+
+    response = post_admin_login(client, Config.ADMIN_EMAIL, "any-test-password")
+
+    assert response.status_code == 200
+    assert b"Invalid administrator credentials" in response.data
+    with client.session_transaction() as sess:
+        assert "user_id" not in sess
+
+
+def test_admin_login_rejects_non_admin_role(client, monkeypatch):
+    """A matching password does not let a customer access the admin portal."""
+    customer_user = {
+        "id": "test-customer-id",
+        "name": "Test Customer",
+        "email": Config.ADMIN_EMAIL,
+        "role": Config.ROLE_CUSTOMER,
+        "password_hash": generate_password_hash("Customer-Test-Password-42!"),
+    }
+    monkeypatch.setattr("app.db.get_user_by_email", lambda _email: customer_user)
+
+    response = post_admin_login(client, Config.ADMIN_EMAIL, "Customer-Test-Password-42!")
+
+    assert response.status_code == 200
+    assert b"Invalid administrator credentials" in response.data
+    with client.session_transaction() as sess:
+        assert "user_id" not in sess
 
 
 def test_non_allowlisted_admin_session_is_denied(client):
